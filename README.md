@@ -3,7 +3,7 @@
 [![pub version](https://img.shields.io/badge/pub-0.1.0-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-[![admob_flutter_plus](image_url)](https://github.com/Detekfit/admob_flutter_plus/blob/main/screenshots/admob_flutter_plus.png?raw=true)
+![Admob Flutter Plus Screenshot](screenshots/admob_flutter_plus.png)
 
 A community-maintained Flutter plugin for the **Google Mobile Ads Next-Gen SDK**
 on Android — banners, interstitials, rewarded ads, native templates,
