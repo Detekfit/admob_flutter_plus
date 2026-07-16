@@ -16,9 +16,9 @@ wrapped in an idiomatic, Future-first Dart API.
 
 ## Screenshots
 
-| Banner                          | Native                          |
-| ------------------------------- | ------------------------------- |
-| _add `screenshots/banner.webp`_ | _add `screenshots/native.webp`_ |
+| Banner                                | Native                                       |
+| ------------------------------------- | -------------------------------------------- |
+| ![Banner ad](screenshots/banner.webp) | ![Native banner ad](screenshots/native.webp) |
 
 ## Platform support
 
