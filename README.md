@@ -3,7 +3,7 @@
 [![pub version](https://img.shields.io/badge/pub-0.1.0-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-![Admob Flutter Plus Screenshot](screenshots/admob_flutter_plus.png)
+![Admob Flutter Plus Screenshot](screenshots/admob_flutter_plus.webp)
 
 A community-maintained Flutter plugin for the **Google Mobile Ads Next-Gen SDK**
 on Android — banners, interstitials, rewarded ads, native templates (built-in
@@ -16,8 +16,8 @@ wrapped in an idiomatic, Future-first Dart API.
 
 ## Screenshots
 
-| Banner | Native |
-|---|---|
+| Banner                          | Native                          |
+| ------------------------------- | ------------------------------- |
 | _add `screenshots/banner.webp`_ | _add `screenshots/native.webp`_ |
 
 ## Platform support
@@ -107,19 +107,19 @@ BannerAdView(
 `SizedBox`/`AspectRatio`. Adaptive banners resolve their real height natively;
 `height` is the reserved slot in the Flutter layout.
 
-| Dart API | Native mapping | Suggested height |
-|---|---|---|
-| `AdSize.anchored({width})` | `getLargeAnchoredAdaptiveBannerAdSize` | ~100–150 dp |
-| `AdSize.anchoredPortrait({width})` | `getLargePortraitAnchoredAdaptiveBannerAdSize` | ~100–150 dp |
-| `AdSize.anchoredLandscape({width})` | `getLargeLandscapeAnchoredAdaptiveBannerAdSize` | ~100 dp |
-| `AdSize.inline({width, maxHeight})` | `getInlineAdaptiveBannerAdSize` | `maxHeight` |
-| `AdSize.inlineCurrentOrientation({width})` | `getCurrentOrientationInlineAdaptiveBannerAdSize` | varies |
-| `AdSize.banner()` | `AdSize.BANNER` | 50 dp |
-| `AdSize.largeBanner()` | `AdSize.LARGE_BANNER` | 100 dp |
-| `AdSize.mediumRectangle()` | `AdSize.MEDIUM_RECTANGLE` | 250 dp |
-| `AdSize.fullBanner()` | `AdSize.FULL_BANNER` | 60 dp |
-| `AdSize.leaderboard()` | `AdSize.LEADERBOARD` | 90 dp |
-| `AdSize.fixed(width, height)` | `AdSize(w, h)` | `height` |
+| Dart API                                   | Native mapping                                    | Suggested height |
+| ------------------------------------------ | ------------------------------------------------- | ---------------- |
+| `AdSize.anchored({width})`                 | `getLargeAnchoredAdaptiveBannerAdSize`            | ~100–150 dp      |
+| `AdSize.anchoredPortrait({width})`         | `getLargePortraitAnchoredAdaptiveBannerAdSize`    | ~100–150 dp      |
+| `AdSize.anchoredLandscape({width})`        | `getLargeLandscapeAnchoredAdaptiveBannerAdSize`   | ~100 dp          |
+| `AdSize.inline({width, maxHeight})`        | `getInlineAdaptiveBannerAdSize`                   | `maxHeight`      |
+| `AdSize.inlineCurrentOrientation({width})` | `getCurrentOrientationInlineAdaptiveBannerAdSize` | varies           |
+| `AdSize.banner()`                          | `AdSize.BANNER`                                   | 50 dp            |
+| `AdSize.largeBanner()`                     | `AdSize.LARGE_BANNER`                             | 100 dp           |
+| `AdSize.mediumRectangle()`                 | `AdSize.MEDIUM_RECTANGLE`                         | 250 dp           |
+| `AdSize.fullBanner()`                      | `AdSize.FULL_BANNER`                              | 60 dp            |
+| `AdSize.leaderboard()`                     | `AdSize.LEADERBOARD`                              | 90 dp            |
+| `AdSize.fixed(width, height)`              | `AdSize(w, h)`                                    | `height`         |
 
 > **`AdSize.anchored()` uses the large anchored adaptive API**
 > (`getLargeAnchoredAdaptiveBannerAdSize`), per the current Next-Gen docs — not
@@ -257,12 +257,12 @@ await nativeAd.load();
 
 Then render a built-in template, or a custom template from assets:
 
-| Widget | Layout | Suggested height |
-|---|---|---|
-| `NativeBannerAdView` | icon + headline + CTA | ~92 dp |
-| `NativeSmallAdView` | icon + headline + body + CTA | ~150 dp |
-| `NativeLargeAdView` | media + headline + body + CTA | ~380 dp |
-| `NativeCustomAdView` | Flutter-asset Android XML | you choose |
+| Widget               | Layout                        | Suggested height |
+| -------------------- | ----------------------------- | ---------------- |
+| `NativeBannerAdView` | icon + headline + CTA         | ~92 dp           |
+| `NativeSmallAdView`  | icon + headline + body + CTA  | ~150 dp          |
+| `NativeLargeAdView`  | media + headline + body + CTA | ~380 dp          |
+| `NativeCustomAdView` | Flutter-asset Android XML     | you choose       |
 
 ```dart
 NativeLargeAdView(
@@ -341,13 +341,13 @@ duplicate class errors.
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---|---|
-| Every request is no-fill | Use the Google test ad units; new units take time to fill |
-| Crash / "missing application ID" | Add the `APPLICATION_ID` meta-data |
-| App stuck on splash | Wrap consent in `try/catch`; always call `runApp()` |
-| Not seeing test ads | Register your device via `RequestConfiguration.testDeviceIds` |
-| Banner clipped | Give it a bounded `height` (≥100 dp for anchored/collapsible) |
+| Symptom                          | Fix                                                           |
+| -------------------------------- | ------------------------------------------------------------- |
+| Every request is no-fill         | Use the Google test ad units; new units take time to fill     |
+| Crash / "missing application ID" | Add the `APPLICATION_ID` meta-data                            |
+| App stuck on splash              | Wrap consent in `try/catch`; always call `runApp()`           |
+| Not seeing test ads              | Register your device via `RequestConfiguration.testDeviceIds` |
+| Banner clipped                   | Give it a bounded `height` (≥100 dp for anchored/collapsible) |
 
 ## Known native SDK notes
 

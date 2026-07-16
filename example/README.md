@@ -1,17 +1,22 @@
-# admob_flutter_plus_example
+# Example — admob_flutter_plus
 
-Demonstrates how to use the admob_flutter_plus plugin.
+Demonstrates every ad format supported by `admob_flutter_plus` on Android:
+banner, interstitial, rewarded / rewarded interstitial, native (built-in +
+custom asset XML), and app open — plus UMP consent and Ad Inspector.
 
-## Getting Started
+## Run
 
-This project is a starting point for a Flutter application.
+```bash
+cd example
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+Use a physical Android device or emulator with Google Play services. The demo
+uses Google test ad unit IDs by default (see `lib/ad_demo_constants.dart`).
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Notes
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Mounts one section at a time (not `TabBarView`) so PlatformViews dispose
+  cleanly between formats.
+- Native → **Custom** loads `assets/native/custom_native_ad.xml`.

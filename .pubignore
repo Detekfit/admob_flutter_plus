@@ -8,3 +8,10 @@ android/.gradle/
 android/build/
 *.iml
 .idea/
+
+# Dev / agent artifacts — not part of the published package
+prompt.md
+PUBLISH.md
+screenshots/README.md
+agent-transcripts/
+**/agent-tools/
