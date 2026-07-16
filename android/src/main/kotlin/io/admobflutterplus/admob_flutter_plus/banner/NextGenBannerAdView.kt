@@ -1,10 +1,13 @@
 package io.admobflutterplus.admob_flutter_plus.banner
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import com.google.android.libraries.ads.mobile.sdk.banner.AdSize
 import com.google.android.libraries.ads.mobile.sdk.banner.AdView
@@ -31,11 +34,16 @@ private const val TAG = "AdmobFlutterPlusBanner"
  * event and refresh callbacks. Supports in-place [reload] over a per-view
  * method channel without recreating the PlatformView.
  *
+ * Collapsible banners require a real [Activity] context; creating [AdView] with
+ * only an application / detached context can return `isCollapsible == true`
+ * while the expand overlay never appears.
+ *
  * Dispose is guarded: load/refresh callbacks that arrive after [dispose] are
  * ignored so tab switches / widget rebuilds cannot crash the host Activity.
  */
 class NextGenBannerAdView(
     private val context: Context,
+    private val activityProvider: () -> Activity?,
     viewId: Int,
     creationParams: Map<*, *>?,
     messenger: BinaryMessenger,
@@ -43,7 +51,11 @@ class NextGenBannerAdView(
 ) : PlatformView, MethodChannel.MethodCallHandler {
 
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val container = FrameLayout(context)
+    private val container = FrameLayout(context).apply {
+        // Collapsible overlays grow outside the collapsed banner bounds.
+        clipChildren = false
+        clipToPadding = false
+    }
     private val channel = MethodChannel(messenger, "admob_flutter_plus/banner_ad_$viewId")
 
     private var adView: AdView? = null
@@ -61,6 +73,24 @@ class NextGenBannerAdView(
             )
         }
         loadBanner(creationParams)
+    }
+
+    /** Prefer the foreground Activity; fall back to unwrapping [context]. */
+    private fun resolveActivityContext(): Context {
+        val activity = activityProvider()
+        if (activity != null) return activity
+
+        var current: Context? = context
+        while (current is ContextWrapper) {
+            if (current is Activity) return current
+            current = current.baseContext
+        }
+        Log.w(
+            TAG,
+            "No Activity available for AdView. Collapsible expand overlays may not show. " +
+                "Ensure the plugin is attached to an Activity before mounting banners.",
+        )
+        return context
     }
 
     override fun getView(): View = container
@@ -123,10 +153,17 @@ class NextGenBannerAdView(
         @Suppress("UNCHECKED_CAST")
         val requestMap = creationParams["request"] as? Map<String, Any?>
 
-        val adSize = resolveAdSize(context, sizeMap)
-        val view = AdView(context)
+        val host = resolveActivityContext()
+        val adSize = resolveAdSize(host, sizeMap)
+        val view = AdView(host)
         adView = view
-        container.addView(view)
+        container.addView(
+            view,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ),
+        )
 
         val requestBuilder = BannerAdRequest.Builder(adUnitId, adSize)
             .apply { applyRequest(requestMap) }

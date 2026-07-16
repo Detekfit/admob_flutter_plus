@@ -6,67 +6,71 @@ import 'package:flutter/material.dart';
 import '../ad_demo_constants.dart';
 
 class AppOpenSection extends StatefulWidget {
-  const AppOpenSection({super.key});
+  const AppOpenSection({super.key, this.config = const AdDemoConfig()});
+
+  final AdDemoConfig config;
 
   @override
-  State<AppOpenSection> createState() => _AppOpenSectionState();
+  State<AppOpenSection> createState() => AppOpenSectionState();
 }
 
-class _AppOpenSectionState extends State<AppOpenSection> {
-  AppOpenAd? _ad;
-  StreamSubscription<AppState>? _subscription;
-  bool _listening = false;
-  bool _showOnForeground = true;
-  String _status = 'Idle';
+class AppOpenSectionState extends State<AppOpenSection> {
+  AppOpenAd? ad;
+  StreamSubscription<AppState>? subscription;
+  bool listening = false;
+  bool showOnForeground = true;
+  String status = 'Idle';
 
-  void _log(String message) {
-    if (mounted) setState(() => _status = message);
+  String get adUnitId => AdDemoIds.resolve(AdDemoIds.appOpen, useInvalidUnit: widget.config.useInvalidUnit);
+
+  void log(String message) {
+    if (mounted) setState(() => status = message);
   }
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    subscription?.cancel();
     super.dispose();
   }
 
-  Future<void> _load() async {
+  Future<void> load() async {
     try {
-      _ad = await AppOpenAd.load(adUnitId: AdDemoIds.appOpen);
-      _ad!.listener = AppOpenAdListener(
+      ad = await AppOpenAd.load(adUnitId: adUnitId);
+      ad!.listener = AppOpenAdListener(
         onAdDismissedFullScreenContent: () {
-          _log('Dismissed');
-          _ad = null;
+          log('Dismissed');
+          ad = null;
         },
       );
-      _log('App open ad loaded');
+      log('App open ad loaded');
     } on AdLoadException catch (e) {
-      _log('Load failed: ${e.error}');
+      log('Load failed: ${e.error}');
     }
   }
 
-  Future<void> _startListening() async {
+  Future<void> startListening() async {
     await AppStateEventNotifier.startListening();
-    _subscription = AppStateEventNotifier.appStateStream.listen((state) async {
-      if (state == AppState.foreground && _showOnForeground) {
-        await _showIfAvailable();
+    subscription = AppStateEventNotifier.appStateStream.listen((state) async {
+      if (state == AppState.foreground && showOnForeground) {
+        await showIfAvailable();
       }
     });
-    setState(() => _listening = true);
-    _log('Listening for foreground transitions');
+    setState(() => listening = true);
+    log('Listening for foreground transitions');
   }
 
-  Future<void> _stopListening() async {
-    await _subscription?.cancel();
+  Future<void> stopListening() async {
+    await subscription?.cancel();
     await AppStateEventNotifier.stopListening();
-    setState(() => _listening = false);
-    _log('Stopped listening');
+    setState(() => listening = false);
+    log('Stopped listening');
   }
 
-  Future<void> _showIfAvailable() async {
-    final ad = _ad;
-    if (ad != null && await ad.isAvailable()) {
-      await ad.show();
-      _ad = null;
+  Future<void> showIfAvailable() async {
+    final current = ad;
+    if (current != null && await current.isAvailable()) {
+      await current.show();
+      ad = null;
     }
   }
 
@@ -75,7 +79,14 @@ class _AppOpenSectionState extends State<AppOpenSection> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Status: $_status'),
+        Text('Status: $status'),
+        if (widget.config.useInvalidUnit) ...[
+          const SizedBox(height: 4),
+          Text(
+            'invalid unit (all ads)',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.primary),
+          ),
+        ],
         const SizedBox(height: 12),
         const Text(
           'App open ads are driven by process lifecycle. Background the app '
@@ -84,20 +95,20 @@ class _AppOpenSectionState extends State<AppOpenSection> {
         const SizedBox(height: 12),
         SwitchListTile(
           title: const Text('Show on next foreground'),
-          value: _showOnForeground,
-          onChanged: (v) => setState(() => _showOnForeground = v),
+          value: showOnForeground,
+          onChanged: (value) => setState(() => showOnForeground = value),
         ),
-        Wrap(spacing: 8, children: [
-          FilledButton(onPressed: _load, child: const Text('Load')),
-          FilledButton.tonal(
-            onPressed: _showIfAvailable,
-            child: const Text('Show now'),
-          ),
-          OutlinedButton(
-            onPressed: _listening ? _stopListening : _startListening,
-            child: Text(_listening ? 'Stop listening' : 'Start listening'),
-          ),
-        ]),
+        Wrap(
+          spacing: 8,
+          children: [
+            FilledButton(onPressed: load, child: const Text('Load')),
+            FilledButton.tonal(onPressed: showIfAvailable, child: const Text('Show now')),
+            OutlinedButton(
+              onPressed: listening ? stopListening : startListening,
+              child: Text(listening ? 'Stop listening' : 'Start listening'),
+            ),
+          ],
+        ),
       ],
     );
   }

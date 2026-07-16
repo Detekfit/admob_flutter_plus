@@ -4,94 +4,95 @@ import 'package:flutter/material.dart';
 import '../ad_demo_constants.dart';
 
 class RewardedSection extends StatefulWidget {
-  const RewardedSection({super.key});
+  const RewardedSection({super.key, this.config = const AdDemoConfig()});
+
+  final AdDemoConfig config;
 
   @override
-  State<RewardedSection> createState() => _RewardedSectionState();
+  State<RewardedSection> createState() => RewardedSectionState();
 }
 
-class _RewardedSectionState extends State<RewardedSection> {
-  RewardedAd? _rewarded;
-  RewardedInterstitialAd? _rewardedInterstitial;
-  String _status = 'Idle';
+class RewardedSectionState extends State<RewardedSection> {
+  RewardedAd? rewarded;
+  RewardedInterstitialAd? rewardedInterstitial;
+  String status = 'Idle';
 
-  void _log(String message) {
-    if (mounted) setState(() => _status = message);
+  String get rewardedAdUnitId =>
+      AdDemoIds.resolve(AdDemoIds.rewarded, useInvalidUnit: widget.config.useInvalidUnit);
+
+  String get rewardedInterstitialAdUnitId =>
+      AdDemoIds.resolve(AdDemoIds.rewardedInterstitial, useInvalidUnit: widget.config.useInvalidUnit);
+
+  void log(String message) {
+    if (mounted) setState(() => status = message);
   }
 
-  void _reward(RewardItem reward) =>
-      _log('Reward: ${reward.amount} ${reward.type}');
+  void onReward(RewardItem reward) => log('Reward: ${reward.amount} ${reward.type}');
 
-  Future<void> _loadRewarded() async {
+  Future<void> loadRewarded() async {
     try {
-      _rewarded = await RewardedAd.load(adUnitId: AdDemoIds.rewarded);
-      _log('Rewarded loaded');
+      rewarded = await RewardedAd.load(adUnitId: rewardedAdUnitId);
+      log('Rewarded loaded');
     } on AdLoadException catch (e) {
-      _log('Rewarded load failed: ${e.error}');
+      log('Rewarded load failed: ${e.error}');
     }
   }
 
-  Future<void> _showRewarded() async {
-    final ad = _rewarded;
-    if (ad == null) {
-      _log('Load a rewarded ad first');
+  Future<void> showRewarded() async {
+    final current = rewarded;
+    if (current == null) {
+      log('Load a rewarded ad first');
       return;
     }
-    await ad.show(onUserEarnedReward: _reward);
-    _rewarded = null;
+    await current.show(onUserEarnedReward: onReward);
+    rewarded = null;
   }
 
-  Future<void> _loadRewardedInterstitial() async {
+  Future<void> loadRewardedInterstitial() async {
     try {
-      _rewardedInterstitial = await RewardedInterstitialAd.load(
-        adUnitId: AdDemoIds.rewardedInterstitial,
-      );
-      _log('Rewarded interstitial loaded');
+      rewardedInterstitial = await RewardedInterstitialAd.load(adUnitId: rewardedInterstitialAdUnitId);
+      log('Rewarded interstitial loaded');
     } on AdLoadException catch (e) {
-      _log('RI load failed: ${e.error}');
+      log('RI load failed: ${e.error}');
     }
   }
 
-  Future<void> _showRewardedInterstitial() async {
-    final ad = _rewardedInterstitial;
-    if (ad == null) {
-      _log('Load a rewarded interstitial first');
+  Future<void> showRewardedInterstitial() async {
+    final current = rewardedInterstitial;
+    if (current == null) {
+      log('Load a rewarded interstitial first');
       return;
     }
-    await ad.show(onUserEarnedReward: _reward);
-    _rewardedInterstitial = null;
+    await current.show(onUserEarnedReward: onReward);
+    rewardedInterstitial = null;
   }
 
-  Future<void> _startRewardedPreload() async {
-    await RewardedAdPreloader.start(adUnitId: AdDemoIds.rewarded);
-    _log('Rewarded preloader started — poll shortly');
+  Future<void> startRewardedPreload() async {
+    await RewardedAdPreloader.start(adUnitId: rewardedAdUnitId);
+    log('Rewarded preloader started — poll shortly');
   }
 
-  Future<void> _pollAndShowRewarded() async {
-    final ad = await RewardedAdPreloader.poll(adUnitId: AdDemoIds.rewarded);
-    if (ad == null) {
-      _log('No preloaded rewarded available yet');
+  Future<void> pollAndShowRewarded() async {
+    final preloaded = await RewardedAdPreloader.poll(adUnitId: rewardedAdUnitId);
+    if (preloaded == null) {
+      log('No preloaded rewarded available yet');
       return;
     }
-    await ad.show(onUserEarnedReward: _reward);
+    await preloaded.show(onUserEarnedReward: onReward);
   }
 
-  Future<void> _preloaderDemo() async {
-    await RewardedInterstitialAdPreloader.start(
-      adUnitId: AdDemoIds.rewardedInterstitial,
-    );
-    _log('RI preloader started — poll shortly');
+  Future<void> startRewardedInterstitialPreload() async {
+    await RewardedInterstitialAdPreloader.start(adUnitId: rewardedInterstitialAdUnitId);
+    log('RI preloader started — poll shortly');
   }
 
-  Future<void> _pollAndShowRI() async {
-    final ad = await RewardedInterstitialAdPreloader.poll(
-      adUnitId: AdDemoIds.rewardedInterstitial,
-    );
-    if (ad == null) {
-      _log('No preloaded RI available yet');
+  Future<void> pollAndShowRewardedInterstitial() async {
+    final preloaded = await RewardedInterstitialAdPreloader.poll(adUnitId: rewardedInterstitialAdUnitId);
+    if (preloaded == null) {
+      log('No preloaded RI available yet');
       return;
     }
-    await ad.show(onUserEarnedReward: _reward);
+    await preloaded.show(onUserEarnedReward: onReward);
   }
 
   @override
@@ -99,53 +100,48 @@ class _RewardedSectionState extends State<RewardedSection> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Status: $_status'),
+        Text('Status: $status'),
+        if (widget.config.useInvalidUnit) ...[
+          const SizedBox(height: 4),
+          Text(
+            'invalid unit (all ads)',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.primary),
+          ),
+        ],
         const SizedBox(height: 16),
         Text('Rewarded', style: Theme.of(context).textTheme.titleMedium),
-        Wrap(spacing: 8, children: [
-          FilledButton(onPressed: _loadRewarded, child: const Text('Load')),
-          FilledButton.tonal(
-            onPressed: _showRewarded,
-            child: const Text('Show'),
-          ),
-        ]),
-        const SizedBox(height: 8),
-        Wrap(spacing: 8, children: [
-          OutlinedButton(
-            onPressed: _startRewardedPreload,
-            child: const Text('Preload start'),
-          ),
-          OutlinedButton(
-            onPressed: _pollAndShowRewarded,
-            child: const Text('Poll & show'),
-          ),
-        ]),
-        const Divider(height: 32),
-        Text(
-          'Rewarded Interstitial',
-          style: Theme.of(context).textTheme.titleMedium,
+        Wrap(
+          spacing: 8,
+          children: [
+            FilledButton(onPressed: loadRewarded, child: const Text('Load')),
+            FilledButton.tonal(onPressed: showRewarded, child: const Text('Show')),
+          ],
         ),
-        Wrap(spacing: 8, children: [
-          FilledButton(
-            onPressed: _loadRewardedInterstitial,
-            child: const Text('Load'),
-          ),
-          FilledButton.tonal(
-            onPressed: _showRewardedInterstitial,
-            child: const Text('Show'),
-          ),
-        ]),
         const SizedBox(height: 8),
-        Wrap(spacing: 8, children: [
-          OutlinedButton(
-            onPressed: _preloaderDemo,
-            child: const Text('Preload start'),
-          ),
-          OutlinedButton(
-            onPressed: _pollAndShowRI,
-            child: const Text('Poll & show'),
-          ),
-        ]),
+        Wrap(
+          spacing: 8,
+          children: [
+            OutlinedButton(onPressed: startRewardedPreload, child: const Text('Preload start')),
+            OutlinedButton(onPressed: pollAndShowRewarded, child: const Text('Poll & show')),
+          ],
+        ),
+        const Divider(height: 32),
+        Text('Rewarded Interstitial', style: Theme.of(context).textTheme.titleMedium),
+        Wrap(
+          spacing: 8,
+          children: [
+            FilledButton(onPressed: loadRewardedInterstitial, child: const Text('Load')),
+            FilledButton.tonal(onPressed: showRewardedInterstitial, child: const Text('Show')),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            OutlinedButton(onPressed: startRewardedInterstitialPreload, child: const Text('Preload start')),
+            OutlinedButton(onPressed: pollAndShowRewardedInterstitial, child: const Text('Poll & show')),
+          ],
+        ),
       ],
     );
   }

@@ -4,110 +4,111 @@ import 'package:flutter/material.dart';
 import '../ad_demo_constants.dart';
 
 class NativeSection extends StatefulWidget {
-  const NativeSection({super.key});
+  const NativeSection({super.key, this.config = const AdDemoConfig()});
+
+  final AdDemoConfig config;
 
   @override
-  State<NativeSection> createState() => _NativeSectionState();
+  State<NativeSection> createState() => NativeSectionState();
 }
 
-enum _Template { banner, small, large }
+enum NativeTemplate { banner, small, large }
 
-class _NativeSectionState extends State<NativeSection> {
-  NativeAd? _ad;
-  bool _loading = false;
-  String _status = 'Idle';
-  _Template _template = _Template.large;
+class NativeSectionState extends State<NativeSection> {
+  NativeAd? ad;
+  bool loading = false;
+  String status = 'Idle';
+  NativeTemplate template = NativeTemplate.large;
 
-  static const NativeAdViewStyle _style = NativeAdViewStyle(
+  static const NativeAdViewStyle style = NativeAdViewStyle(
     ctaColor: Colors.indigo,
     ctaTextColor: Colors.white,
-    ctaCornerRadius: 12,
+    ctaCornerRadius: 4,
     titleColor: Colors.black87,
     descriptionColor: Colors.black54,
   );
 
+  String get adUnitId => AdDemoIds.resolve(AdDemoIds.nativeAd, useInvalidUnit: widget.config.useInvalidUnit);
+
   @override
   void dispose() {
-    _ad?.dispose();
+    ad?.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
+  Future<void> load() async {
     if (!mounted) return;
-    setState(() => _loading = true);
-    await _ad?.dispose();
-    final ad = NativeAd(
-      adUnitId: AdDemoIds.nativeAd,
+    setState(() => loading = true);
+    await ad?.dispose();
+    final next = NativeAd(
+      adUnitId: adUnitId,
       options: const NativeAdOptions(startVideoMuted: true),
       listener: NativeAdListener(
         onAdClicked: () {
-          if (mounted) setState(() => _status = 'Clicked');
+          if (mounted) setState(() => status = 'Clicked');
         },
         onAdImpression: () {
-          if (mounted) setState(() => _status = 'Impression');
+          if (mounted) setState(() => status = 'Impression');
         },
       ),
     );
     try {
-      await ad.load();
+      await next.load();
       if (!mounted) {
-        await ad.dispose();
+        await next.dispose();
         return;
       }
       setState(() {
-        _ad = ad;
-        _status = 'Loaded';
-        _loading = false;
+        ad = next;
+        status = 'Loaded';
+        loading = false;
       });
     } on AdLoadException catch (e) {
-      await ad.dispose();
+      await next.dispose();
       if (!mounted) return;
       setState(() {
-        _status = 'Failed: ${e.error}';
-        _loading = false;
+        status = 'Failed: ${e.error}';
+        loading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final ad = _ad;
+    final current = ad;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Status: $_status'),
+        Text('Status: $status'),
+        if (widget.config.useInvalidUnit) ...[
+          const SizedBox(height: 4),
+          Text('invalid unit (all ads)', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.primary)),
+        ],
         const SizedBox(height: 8),
-        FilledButton.icon(
-          onPressed: _loading ? null : _load,
-          icon: const Icon(Icons.download),
-          label: const Text('Load native ad'),
-        ),
-        SegmentedButton<_Template>(
+        FilledButton.icon(onPressed: loading ? null : load, icon: const Icon(Icons.download), label: const Text('Load native ad')),
+        SegmentedButton<NativeTemplate>(
           segments: const [
-            ButtonSegment(value: _Template.banner, label: Text('Banner')),
-            ButtonSegment(value: _Template.small, label: Text('Small')),
-            ButtonSegment(value: _Template.large, label: Text('Large')),
+            ButtonSegment(value: NativeTemplate.banner, label: Text('Banner')),
+            ButtonSegment(value: NativeTemplate.small, label: Text('Small')),
+            ButtonSegment(value: NativeTemplate.large, label: Text('Large')),
           ],
-          selected: {_template},
-          onSelectionChanged: (s) => setState(() => _template = s.first),
+          selected: {template},
+          onSelectionChanged: (selected) => setState(() => template = selected.first),
         ),
         const Divider(height: 32),
-        if (ad != null && ad.isLoaded)
-          _buildTemplate(ad)
-        else
-          const Text('Load an ad to preview the templates.'),
+        if (current != null && current.isLoaded) buildTemplate(current) else const Text('Load an ad to preview the templates.'),
       ],
     );
   }
 
-  Widget _buildTemplate(NativeAd ad) {
-    switch (_template) {
-      case _Template.banner:
-        return NativeBannerAdView(ad: ad, style: _style);
-      case _Template.small:
-        return NativeSmallAdView(ad: ad, style: _style);
-      case _Template.large:
-        return NativeLargeAdView(ad: ad, style: _style);
+  Widget buildTemplate(NativeAd nativeAd) {
+    switch (template) {
+      case NativeTemplate.banner:
+        return NativeBannerAdView(ad: nativeAd, style: style);
+      case NativeTemplate.small:
+        return NativeSmallAdView(ad: nativeAd, style: style);
+      case NativeTemplate.large:
+        return NativeLargeAdView(ad: nativeAd, style: style);
     }
   }
 }

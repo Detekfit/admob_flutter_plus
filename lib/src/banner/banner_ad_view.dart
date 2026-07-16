@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../core/ad_error.dart';
@@ -16,7 +18,10 @@ const String _bannerViewType = 'admob_flutter_plus/banner_ad';
 /// The widget requires a bounded height. Provide an explicit [height], or wrap
 /// it in a `SizedBox`/`AspectRatio`. Adaptive banners resolve their own height
 /// natively; the [height] you provide is the reserved slot in the Flutter
-/// layout.
+/// layout (collapsed size for collapsible banners).
+///
+/// On Android this uses Hybrid Composition (`initSurfaceAndroidView`) so
+/// collapsible expand overlays are not trapped inside a Virtual Display texture.
 ///
 /// On non-Android platforms this widget renders [placeholder] (or an empty box).
 class BannerAdView extends StatefulWidget {
@@ -146,6 +151,37 @@ class _BannerAdViewState extends State<BannerAdView> {
   Map<dynamic, dynamic> _asMap(dynamic args) =>
       args is Map ? args : const <dynamic, dynamic>{};
 
+  Widget _buildAndroidPlatformView() {
+    // Prefer Hybrid Composition (same path as google_mobile_ads). Virtual
+    // Display textures clip collapsible overlays to the reserved height even
+    // when isCollapsible is true.
+    return PlatformViewLink(
+      viewType: _bannerViewType,
+      surfaceFactory: (context, controller) {
+        return AndroidViewSurface(
+          controller: controller as AndroidViewController,
+          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
+          hitTestBehavior: PlatformViewHitTestBehavior.opaque,
+        );
+      },
+      onCreatePlatformView: (params) {
+        final controller = PlatformViewsService.initSurfaceAndroidView(
+          id: params.id,
+          viewType: _bannerViewType,
+          layoutDirection: TextDirection.ltr,
+          creationParams: _creationParams,
+          creationParamsCodec: const StandardMessageCodec(),
+          onFocus: () => params.onFocusChanged(true),
+        );
+        controller
+          ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
+          ..addOnPlatformViewCreatedListener(_onPlatformViewCreated)
+          ..create();
+        return controller;
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (defaultTargetPlatform != TargetPlatform.android) {
@@ -159,12 +195,7 @@ class _BannerAdViewState extends State<BannerAdView> {
     return SizedBox(
       height: _resolvedHeight,
       width: double.infinity,
-      child: AndroidView(
-        viewType: _bannerViewType,
-        creationParams: _creationParams,
-        creationParamsCodec: const StandardMessageCodec(),
-        onPlatformViewCreated: _onPlatformViewCreated,
-      ),
+      child: _buildAndroidPlatformView(),
     );
   }
 }

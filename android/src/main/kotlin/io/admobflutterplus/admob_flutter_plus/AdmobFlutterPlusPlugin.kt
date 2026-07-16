@@ -71,7 +71,11 @@ class AdmobFlutterPlusPlugin :
         val registry = binding.platformViewRegistry
         registry.registerViewFactory(
             "admob_flutter_plus/banner_ad",
-            BannerAdViewFactory(binding.binaryMessenger) { initialized },
+            BannerAdViewFactory(
+                messenger = binding.binaryMessenger,
+                isInitialized = { initialized },
+                activityProvider = { activity },
+            ),
         )
         registry.registerViewFactory(
             "admob_flutter_plus/native_banner",

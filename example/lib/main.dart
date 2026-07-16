@@ -2,6 +2,7 @@ import 'package:admob_flutter_plus/admob_flutter_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'ad_demo_constants.dart';
 import 'sections/app_open_section.dart';
 import 'sections/banner_section.dart';
 import 'sections/interstitial_section.dart';
@@ -59,14 +60,14 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  int _index = 0;
-  BannerDemoConfig _bannerConfig = const BannerDemoConfig();
+class HomePageState extends State<HomePage> {
+  int tabIndex = 0;
+  AdDemoConfig demoConfig = const AdDemoConfig();
 
-  static const _destinations = <NavigationDestination>[
+  static const destinations = <NavigationDestination>[
     NavigationDestination(icon: Icon(Icons.view_agenda_outlined), label: 'Banner'),
     NavigationDestination(icon: Icon(Icons.fullscreen), label: 'Interstitial'),
     NavigationDestination(icon: Icon(Icons.card_giftcard), label: 'Rewarded'),
@@ -74,29 +75,27 @@ class _HomePageState extends State<HomePage> {
     NavigationDestination(icon: Icon(Icons.open_in_browser), label: 'App Open'),
   ];
 
-  bool get _isBannerTab => _index == 0;
-
-  Widget get _section {
-    switch (_index) {
+  Widget get section {
+    switch (tabIndex) {
       case 0:
-        return BannerSection(config: _bannerConfig);
+        return BannerSection(config: demoConfig);
       case 1:
-        return const InterstitialSection();
+        return InterstitialSection(config: demoConfig);
       case 2:
-        return const RewardedSection();
+        return RewardedSection(config: demoConfig);
       case 3:
-        return const NativeSection();
+        return NativeSection(config: demoConfig);
       case 4:
-        return const AppOpenSection();
+        return AppOpenSection(config: demoConfig);
       default:
-        return BannerSection(config: _bannerConfig);
+        return BannerSection(config: demoConfig);
     }
   }
 
-  Future<void> _openBannerConfig() async {
-    final updated = await showBannerConfigSheet(context, _bannerConfig);
+  Future<void> openDemoConfig() async {
+    final updated = await showAdDemoConfigSheet(context, demoConfig);
     if (updated != null && mounted) {
-      setState(() => _bannerConfig = updated);
+      setState(() => demoConfig = updated);
     }
   }
 
@@ -106,7 +105,11 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Admob Flutter+'),
         actions: [
-          if (_isBannerTab) IconButton(tooltip: 'Configure banners', icon: const Icon(Icons.edit_outlined), onPressed: _openBannerConfig),
+          IconButton(
+            tooltip: 'Configure ad demo',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: openDemoConfig,
+          ),
           IconButton(
             tooltip: 'Ad Inspector (test devices)',
             icon: const Icon(Icons.search),
@@ -122,14 +125,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: KeyedSubtree(key: ValueKey<Object>('$_index-$_bannerConfig'), child: _section),
+      body: KeyedSubtree(key: ValueKey<Object>('$tabIndex-$demoConfig'), child: section),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
+        selectedIndex: tabIndex,
         onDestinationSelected: (index) {
-          if (index == _index) return;
-          setState(() => _index = index);
+          if (index == tabIndex) return;
+          setState(() => tabIndex = index);
         },
-        destinations: _destinations,
+        destinations: destinations,
       ),
     );
   }

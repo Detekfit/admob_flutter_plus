@@ -4,76 +4,75 @@ import 'package:flutter/material.dart';
 import '../ad_demo_constants.dart';
 
 class InterstitialSection extends StatefulWidget {
-  const InterstitialSection({super.key});
+  const InterstitialSection({super.key, this.config = const AdDemoConfig()});
+
+  final AdDemoConfig config;
 
   @override
-  State<InterstitialSection> createState() => _InterstitialSectionState();
+  State<InterstitialSection> createState() => InterstitialSectionState();
 }
 
-class _InterstitialSectionState extends State<InterstitialSection> {
-  InterstitialAd? _ad;
-  bool _preloadStarted = false;
-  String _status = 'Idle';
+class InterstitialSectionState extends State<InterstitialSection> {
+  InterstitialAd? ad;
+  bool preloadStarted = false;
+  String status = 'Idle';
 
-  void _log(String message) {
-    if (mounted) setState(() => _status = message);
+  String get adUnitId => AdDemoIds.resolve(AdDemoIds.interstitial, useInvalidUnit: widget.config.useInvalidUnit);
+
+  void log(String message) {
+    if (mounted) setState(() => status = message);
   }
 
-  Future<void> _load() async {
+  Future<void> load() async {
     try {
-      _ad = await InterstitialAd.load(adUnitId: AdDemoIds.interstitial);
-      _ad!.listener = InterstitialAdListener(
-        onAdDismissedFullScreenContent: () => _log('Dismissed'),
-        onAdFailedToShowFullScreenContent: (e) => _log('Show failed: $e'),
+      ad = await InterstitialAd.load(adUnitId: adUnitId);
+      ad!.listener = InterstitialAdListener(
+        onAdDismissedFullScreenContent: () => log('Dismissed'),
+        onAdFailedToShowFullScreenContent: (e) => log('Show failed: $e'),
       );
-      _log('Loaded — ready to show');
+      log('Loaded — ready to show');
     } on AdLoadException catch (e) {
-      _log('Load failed: ${e.error}');
+      log('Load failed: ${e.error}');
     }
   }
 
-  Future<void> _show() async {
-    final ad = _ad;
-    if (ad == null) {
-      _log('Load an ad first');
+  Future<void> show() async {
+    final current = ad;
+    if (current == null) {
+      log('Load an ad first');
       return;
     }
-    await ad.show();
-    _ad = null;
+    await current.show();
+    ad = null;
   }
 
-  Future<void> _startPreload() async {
-    await InterstitialAdPreloader.start(
-      adUnitId: AdDemoIds.interstitial,
-      bufferSize: 2,
-    );
+  Future<void> startPreload() async {
+    await InterstitialAdPreloader.start(adUnitId: adUnitId, bufferSize: 2);
     if (!mounted) return;
-    setState(() => _preloadStarted = true);
-    _log('Preloader started');
+    setState(() => preloadStarted = true);
+    log('Preloader started');
   }
 
-  Future<void> _showPreloaded() async {
-    final ad = await InterstitialAdPreloader.poll(
-      adUnitId: AdDemoIds.interstitial,
-    );
-    if (ad == null) {
-      _log('No preloaded ad available yet');
+  Future<void> showPreloaded() async {
+    final preloaded = await InterstitialAdPreloader.poll(adUnitId: adUnitId);
+    if (preloaded == null) {
+      log('No preloaded ad available yet');
       return;
     }
-    await ad.show();
-    _log('Showed preloaded ad');
+    await preloaded.show();
+    log('Showed preloaded ad');
   }
 
-  Future<void> _destroyPreload() async {
-    await InterstitialAdPreloader.destroy(adUnitId: AdDemoIds.interstitial);
+  Future<void> destroyPreload() async {
+    await InterstitialAdPreloader.destroy(adUnitId: adUnitId);
     if (!mounted) return;
-    setState(() => _preloadStarted = false);
-    _log('Preloader destroyed');
+    setState(() => preloadStarted = false);
+    log('Preloader destroyed');
   }
 
   @override
   void dispose() {
-    _ad?.dispose();
+    ad?.dispose();
     super.dispose();
   }
 
@@ -82,29 +81,33 @@ class _InterstitialSectionState extends State<InterstitialSection> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Status: $_status'),
+        Text('Status: $status'),
+        if (widget.config.useInvalidUnit) ...[
+          const SizedBox(height: 4),
+          Text(
+            'invalid unit (all ads)',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.primary),
+          ),
+        ],
         const SizedBox(height: 16),
         Text('Regular', style: Theme.of(context).textTheme.titleMedium),
-        Wrap(spacing: 8, children: [
-          FilledButton(onPressed: _load, child: const Text('Load')),
-          FilledButton.tonal(onPressed: _show, child: const Text('Show')),
-        ]),
+        Wrap(
+          spacing: 8,
+          children: [
+            FilledButton(onPressed: load, child: const Text('Load')),
+            FilledButton.tonal(onPressed: show, child: const Text('Show')),
+          ],
+        ),
         const Divider(height: 32),
         Text('Preloader', style: Theme.of(context).textTheme.titleMedium),
-        Wrap(spacing: 8, children: [
-          FilledButton(
-            onPressed: _preloadStarted ? null : _startPreload,
-            child: const Text('Start'),
-          ),
-          FilledButton.tonal(
-            onPressed: _showPreloaded,
-            child: const Text('Poll & Show'),
-          ),
-          OutlinedButton(
-            onPressed: _preloadStarted ? _destroyPreload : null,
-            child: const Text('Destroy'),
-          ),
-        ]),
+        Wrap(
+          spacing: 8,
+          children: [
+            FilledButton(onPressed: preloadStarted ? null : startPreload, child: const Text('Start')),
+            FilledButton.tonal(onPressed: showPreloaded, child: const Text('Poll & Show')),
+            OutlinedButton(onPressed: preloadStarted ? destroyPreload : null, child: const Text('Destroy')),
+          ],
+        ),
       ],
     );
   }
