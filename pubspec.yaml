@@ -14,7 +14,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  plugin_platform_interface: ^2.0.2
 
 dev_dependencies:
   flutter_test:
@@ -32,7 +31,7 @@ platforms:
 
 screenshots:
   - description: "admob_flutter_plus demo — AdMob formats in one Flutter plugin."
-    path: screenshots/admob_flutter_plus.png
+    path: screenshots/admob_flutter_plus.webp
 
 flutter:
   plugin:
