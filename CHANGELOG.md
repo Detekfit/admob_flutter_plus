@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.1.1
+
+### Fixed
+
+- README screenshots on pub.dev: use absolute GitHub raw image URLs and a fixed
+  width for banner/native device screenshots so images render correctly and
+  take less vertical space.
+
 ## 0.1.0
 
 Initial release. Android-only, built on the Google Mobile Ads **Next-Gen SDK**
@@ -46,5 +54,5 @@ Initial release. Android-only, built on the Google Mobile Ads **Next-Gen SDK**
   PlatformViews are fully disposed before another section mounts.
 - Custom asset templates no longer call Android `LayoutInflater` on a raw
   `XmlPullParser` (which crashed with `XmlPullAttributes cannot be cast to
-  XmlBlock$Parser`). Templates are inflated programmatically from the asset
+XmlBlock$Parser`). Templates are inflated programmatically from the asset
   XML instead.
