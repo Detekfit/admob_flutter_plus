@@ -1,6 +1,6 @@
 # admob_flutter_plus
 
-[![pub version](https://img.shields.io/badge/pub-0.1.1-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
+[![pub version](https://img.shields.io/badge/pub-0.1.2-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ![Admob Flutter Plus Screenshot](https://raw.githubusercontent.com/Detekfit/admob_flutter_plus/main/screenshots/admob_flutter_plus.webp)

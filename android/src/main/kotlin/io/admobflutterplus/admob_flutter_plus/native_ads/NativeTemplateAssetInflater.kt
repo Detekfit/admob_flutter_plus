@@ -13,6 +13,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RatingBar
+import android.widget.Space
 import android.widget.TextView
 import com.google.android.libraries.ads.mobile.sdk.nativead.MediaView
 import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdView
@@ -141,10 +142,13 @@ object NativeTemplateAssetInflater {
             }
             "ImageView" -> ImageView(context)
             "RatingBar" -> RatingBar(context, null, android.R.attr.ratingBarStyleSmall)
+            "Space",
+            "android.widget.Space",
+            -> Space(context)
             else -> throw NativeTemplateException(
                 "Unsupported view in native ad template: <$name>. " +
                     "Supported: NativeAdView, MediaView, LinearLayout, FrameLayout, " +
-                    "TextView, Button, ImageView, RatingBar.",
+                    "TextView, Button, ImageView, RatingBar, Space.",
             )
         }
     }

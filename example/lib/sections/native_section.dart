@@ -114,7 +114,7 @@ class NativeSectionState extends State<NativeSection> {
       case NativeTemplate.custom:
         return NativeCustomAdView(
           ad: nativeAd,
-          templateAsset: 'assets/native/custom_native_ad.xml',
+          templateAsset: 'assets/native/native_ad.xml',
           height: 380,
           style: NativeAdViewStyle(ctaColor: Colors.black87, ctaTextColor: Colors.white, ctaCornerRadius: 8, ctaHeight: 40),
         );
