@@ -6,9 +6,9 @@
 ![Admob Flutter Plus Screenshot](screenshots/admob_flutter_plus.png)
 
 A community-maintained Flutter plugin for the **Google Mobile Ads Next-Gen SDK**
-on Android — banners, interstitials, rewarded ads, native templates,
-preloaders, UMP consent, and app open ads, wrapped in an idiomatic,
-Future-first Dart API.
+on Android — banners, interstitials, rewarded ads, native templates (built-in
+or custom XML from Flutter assets), preloaders, UMP consent, and app open ads,
+wrapped in an idiomatic, Future-first Dart API.
 
 > **Unofficial package.** `admob_flutter_plus` is **not** published, endorsed,
 > or maintained by Google. It wraps the official
@@ -242,6 +242,10 @@ App open ads expire four hours after loading; `isAvailable()` enforces this.
 
 ## Native ads
 
+Native ads support **built-in templates** (`NativeBannerAdView`,
+`NativeSmallAdView`, `NativeLargeAdView`) and **custom XML templates loaded
+from Flutter assets** (`NativeCustomAdView`).
+
 ```dart
 final nativeAd = NativeAd(
   adUnitId: 'ca-app-pub-3940256099942544/2247696110',
@@ -251,13 +255,14 @@ final nativeAd = NativeAd(
 await nativeAd.load();
 ```
 
-Then render one of the templates:
+Then render a built-in template, or a custom template from assets:
 
 | Widget | Layout | Suggested height |
 |---|---|---|
 | `NativeBannerAdView` | icon + headline + CTA | ~92 dp |
 | `NativeSmallAdView` | icon + headline + body + CTA | ~150 dp |
 | `NativeLargeAdView` | media + headline + body + CTA | ~380 dp |
+| `NativeCustomAdView` | Flutter-asset Android XML | you choose |
 
 ```dart
 NativeLargeAdView(
@@ -266,10 +271,40 @@ NativeLargeAdView(
 )
 ```
 
+### Custom XML templates (Flutter assets)
+
+Export a layout from the community visual builder (or hand-write one), put it
+under your app assets, and declare it in `pubspec.yaml`:
+
+```yaml
+flutter:
+  assets:
+    - assets/native/my_template.xml
+```
+
+```dart
+NativeCustomAdView(
+  ad: nativeAd,
+  templateAsset: 'assets/native/my_template.xml',
+  height: 360,
+)
+```
+
+Asset XML must bind widgets with `android:tag` (not `@+id`). Required tags:
+`ad_headline`, `ad_call_to_action`. Root must be `NativeAdView` (or tag
+`ad_view`). Optional: `ad_body`, `ad_app_icon`, `ad_attribution`, `ad_media`,
+`ad_advertiser`, `ad_price`, `ad_store`, `ad_stars`. Use literal colors and
+fully-qualified `MediaView` / `NativeAdView` class names — `@drawable` and
+theme attrs are not resolved from Flutter assets.
+
+If the asset is missing or required tags are absent, the plugin throws
+`NativeTemplateException`.
+
 Style via `NativeAdViewStyle` (`cardColor`, `titleColor`, `descriptionColor`,
-CTA colors/text/radius/height, ad badge text/colors/border). Call
-`nativeAd.dispose()` when done. A single `NativeAd` should back only one visible
-template at a time.
+CTA colors/text/radius/height, `fontFamily`, ad badge text/colors/border).
+When `fontFamily` is omitted, template widgets use the host app font from
+`ThemeData` / `DefaultTextStyle`. Call `nativeAd.dispose()` when done. A single
+`NativeAd` should back only one visible template at a time.
 
 ## Request targeting
 

@@ -41,6 +41,7 @@ export 'src/native/native_ad_listener.dart';
 export 'src/native/native_ad_options.dart';
 export 'src/native/native_ad_view_style.dart';
 export 'src/native/native_ad_widgets.dart';
+export 'src/native/native_template_exception.dart';
 
 // Preload
 export 'src/preload/interstitial_ad_preloader.dart';

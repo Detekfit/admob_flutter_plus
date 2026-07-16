@@ -4,11 +4,13 @@ import 'package:flutter/services.dart';
 
 import 'native_ad.dart';
 import 'native_ad_view_style.dart';
+import 'native_template_exception.dart';
 
 /// Native template view types registered by the plugin.
 const String _bannerViewType = 'admob_flutter_plus/native_banner';
 const String _smallViewType = 'admob_flutter_plus/native_small';
 const String _largeViewType = 'admob_flutter_plus/native_large';
+const String _customViewType = 'admob_flutter_plus/native_custom';
 
 /// Shared PlatformView wrapper for native ad templates.
 class _NativeTemplateView extends StatelessWidget {
@@ -18,6 +20,7 @@ class _NativeTemplateView extends StatelessWidget {
     required this.height,
     this.style = const NativeAdViewStyle(),
     this.placeholder,
+    this.creationParams = const <String, dynamic>{},
   });
 
   final String viewType;
@@ -25,12 +28,14 @@ class _NativeTemplateView extends StatelessWidget {
   final double height;
   final NativeAdViewStyle style;
   final Widget? placeholder;
+  final Map<String, dynamic> creationParams;
 
   @override
   Widget build(BuildContext context) {
     if (defaultTargetPlatform != TargetPlatform.android || !ad.isLoaded) {
       return SizedBox(height: height, child: placeholder);
     }
+    final resolvedStyle = style.resolve(context);
     return SizedBox(
       height: height,
       width: double.infinity,
@@ -38,7 +43,8 @@ class _NativeTemplateView extends StatelessWidget {
         viewType: viewType,
         creationParams: <String, dynamic>{
           'adId': ad.adId,
-          'style': style.toMap(),
+          'style': resolvedStyle.toMap(),
+          ...creationParams,
         },
         creationParamsCodec: const StandardMessageCodec(),
       ),
@@ -143,4 +149,126 @@ class NativeLargeAdView extends StatelessWidget {
         style: style,
         placeholder: placeholder,
       );
+}
+
+/// Renders a loaded [NativeAd] using a custom Android XML layout from Flutter
+/// assets.
+///
+/// Declare the file under `flutter/assets` in your app's `pubspec.yaml`.
+/// Asset templates must bind widgets with `android:tag` (not `@+id`):
+///
+/// Required tags:
+/// * `ad_view` — root [NativeAdView] (or use the NativeAdView class as root)
+/// * `ad_headline` — headline [TextView]
+/// * `ad_call_to_action` — CTA [Button] or [TextView]
+///
+/// Optional tags: `ad_body`, `ad_app_icon`, `ad_attribution`, `ad_media`,
+/// `ad_advertiser`, `ad_price`, `ad_store`, `ad_stars`.
+///
+/// Throws [NativeTemplateException] if the asset cannot be loaded. Native-side
+/// inflation / missing required tags also raise [NativeTemplateException].
+///
+/// Avoid `@drawable/...` and theme attrs in asset XML; use literal colors and
+/// fully-qualified view class names (`NativeAdView`, `MediaView`).
+class NativeCustomAdView extends StatefulWidget {
+  /// Creates a [NativeCustomAdView] bound to a loaded [ad] and [templateAsset].
+  const NativeCustomAdView({
+    super.key,
+    required this.ad,
+    required this.templateAsset,
+    this.package,
+    this.height = 200,
+    this.style = const NativeAdViewStyle(),
+    this.placeholder,
+  });
+
+  /// The loaded [NativeAd] to render.
+  final NativeAd ad;
+
+  /// Flutter asset path to the Android XML template
+  /// (for example `assets/native/my_template.xml`).
+  final String templateAsset;
+
+  /// Optional package name when the asset lives in another package.
+  final String? package;
+
+  /// Reserved height in dp for the Flutter [SizedBox] host.
+  final double height;
+
+  /// Template styling overlays (colors, CTA radius, badge text, …).
+  final NativeAdViewStyle style;
+
+  /// Widget shown before the ad is loaded, while validating the asset, or on
+  /// unsupported platforms.
+  final Widget? placeholder;
+
+  @override
+  State<NativeCustomAdView> createState() => _NativeCustomAdViewState();
+}
+
+class _NativeCustomAdViewState extends State<NativeCustomAdView> {
+  Object? _error;
+  bool _assetReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _validateAsset();
+  }
+
+  @override
+  void didUpdateWidget(covariant NativeCustomAdView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.templateAsset != widget.templateAsset ||
+        oldWidget.package != widget.package) {
+      _validateAsset();
+    }
+  }
+
+  Future<void> _validateAsset() async {
+    setState(() {
+      _error = null;
+      _assetReady = false;
+    });
+    final key = widget.package == null
+        ? widget.templateAsset
+        : 'packages/${widget.package}/${widget.templateAsset}';
+    try {
+      await rootBundle.load(key);
+      if (!mounted) return;
+      setState(() => _assetReady = true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = NativeTemplateException(
+          'Native ad template not found. Declare it under flutter/assets '
+          'in pubspec.yaml.',
+          assetPath: widget.templateAsset,
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final error = _error;
+    if (error != null) {
+      // Surface loudly so missing templates are never silently ignored.
+      Error.throwWithStackTrace(error, StackTrace.current);
+    }
+    if (!_assetReady) {
+      return SizedBox(height: widget.height, child: widget.placeholder);
+    }
+    return _NativeTemplateView(
+      viewType: _customViewType,
+      ad: widget.ad,
+      height: widget.height,
+      style: widget.style,
+      placeholder: widget.placeholder,
+      creationParams: <String, dynamic>{
+        'templateAsset': widget.templateAsset,
+        if (widget.package != null) 'templatePackage': widget.package,
+      },
+    );
+  }
 }

@@ -12,7 +12,7 @@ class NativeSection extends StatefulWidget {
   State<NativeSection> createState() => NativeSectionState();
 }
 
-enum NativeTemplate { banner, small, large }
+enum NativeTemplate { banner, small, large, custom }
 
 class NativeSectionState extends State<NativeSection> {
   NativeAd? ad;
@@ -86,11 +86,13 @@ class NativeSectionState extends State<NativeSection> {
         ],
         const SizedBox(height: 8),
         FilledButton.icon(onPressed: loading ? null : load, icon: const Icon(Icons.download), label: const Text('Load native ad')),
+        const SizedBox(height: 8),
         SegmentedButton<NativeTemplate>(
           segments: const [
             ButtonSegment(value: NativeTemplate.banner, label: Text('Banner')),
             ButtonSegment(value: NativeTemplate.small, label: Text('Small')),
             ButtonSegment(value: NativeTemplate.large, label: Text('Large')),
+            ButtonSegment(value: NativeTemplate.custom, label: Text('Custom')),
           ],
           selected: {template},
           onSelectionChanged: (selected) => setState(() => template = selected.first),
@@ -109,6 +111,13 @@ class NativeSectionState extends State<NativeSection> {
         return NativeSmallAdView(ad: nativeAd, style: style);
       case NativeTemplate.large:
         return NativeLargeAdView(ad: nativeAd, style: style);
+      case NativeTemplate.custom:
+        return NativeCustomAdView(
+          ad: nativeAd,
+          templateAsset: 'assets/native/custom_native_ad.xml',
+          height: 380,
+          style: NativeAdViewStyle(ctaColor: Colors.black87, ctaTextColor: Colors.white, ctaCornerRadius: 8, ctaHeight: 40),
+        );
     }
   }
 }

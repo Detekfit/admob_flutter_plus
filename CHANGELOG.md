@@ -28,6 +28,13 @@ Initial release. Android-only, built on the Google Mobile Ads **Next-Gen SDK**
   Next-Gen preloading guides.
 - Native ads with three prebuilt templates (banner, small, large), styling, and
   Native Validator media deferral for the large template.
+- Native ads can use custom XML templates from Flutter assets via
+  `NativeCustomAdView` (`android:tag` binding). Throws
+  `NativeTemplateException` when the asset is missing or required tags are
+  absent. Optional asset tags include advertiser, price, store, stars, and
+  media.
+- Native ad `NativeAdViewStyle.fontFamily` (optional). When omitted, template
+  widgets inherit the host app font from `ThemeData` / `DefaultTextStyle`.
 - Full example app exercising every ad type with Google test ad units.
 - Unit tests for `AdSize`, banner retry policy, request/config serialization.
 
@@ -37,3 +44,7 @@ Initial release. Android-only, built on the Google Mobile Ads **Next-Gen SDK**
   crash the host app when leaving a screen that still had banners loading.
 - Example app: replaced `TabBarView` with single-section navigation so AdMob
   PlatformViews are fully disposed before another section mounts.
+- Custom asset templates no longer call Android `LayoutInflater` on a raw
+  `XmlPullParser` (which crashed with `XmlPullAttributes cannot be cast to
+  XmlBlock$Parser`). Templates are inflated programmatically from the asset
+  XML instead.

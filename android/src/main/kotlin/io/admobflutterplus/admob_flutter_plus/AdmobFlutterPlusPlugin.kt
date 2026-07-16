@@ -15,6 +15,7 @@ import io.admobflutterplus.admob_flutter_plus.helper.AdCoordinator
 import io.admobflutterplus.admob_flutter_plus.interstitial.InterstitialAdManager
 import io.admobflutterplus.admob_flutter_plus.native_ads.NativeAdManager
 import io.admobflutterplus.admob_flutter_plus.native_ads.NativeAdViewFactory
+import io.admobflutterplus.admob_flutter_plus.native_ads.NativeCustomAdViewFactory
 import io.admobflutterplus.admob_flutter_plus.native_ads.NativeTemplate
 import io.admobflutterplus.admob_flutter_plus.preload.PreloaderManager
 import io.admobflutterplus.admob_flutter_plus.rewarded.RewardedAdManager
@@ -88,6 +89,10 @@ class AdmobFlutterPlusPlugin :
         registry.registerViewFactory(
             "admob_flutter_plus/native_large",
             NativeAdViewFactory(NativeTemplate.LARGE, nativeManager),
+        )
+        registry.registerViewFactory(
+            "admob_flutter_plus/native_custom",
+            NativeCustomAdViewFactory(nativeManager),
         )
     }
 
