@@ -52,12 +52,22 @@ void main() {
       const config = RequestConfiguration(
         testDeviceIds: ['ABC123'],
         maxAdContentRating: MaxAdContentRating.pg,
-        tagForChildDirectedTreatment: TagForChildDirectedTreatment.no,
-        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
+        ageRestrictedTreatment: AgeRestrictedTreatment.teen,
       );
       final map = config.toMap();
       expect(map['testDeviceIds'], ['ABC123']);
       expect(map['maxAdContentRating'], 'pg');
+      expect(map['ageRestrictedTreatment'], 'teen');
+    });
+
+    test('still serializes deprecated COPPA tags', () {
+      const config = RequestConfiguration(
+        // ignore: deprecated_member_use_from_same_package
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.no,
+        // ignore: deprecated_member_use_from_same_package
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
+      );
+      final map = config.toMap();
       expect(map['tagForChildDirectedTreatment'], 'no');
       expect(map['tagForUnderAgeOfConsent'], 'yes');
     });

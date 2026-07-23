@@ -9,6 +9,11 @@ class BannerAdController {
 
   Future<void> Function()? _refreshImpl;
 
+  /// Ad unit ID reported by the native SDK after the banner loads.
+  ///
+  /// `null` until the first successful load.
+  String? adUnitId;
+
   /// Internal: wires the controller to a mounted [BannerAdView].
   void attach(Future<void> Function() refreshImpl) {
     _refreshImpl = refreshImpl;
@@ -17,6 +22,7 @@ class BannerAdController {
   /// Internal: detaches the controller when the view is disposed.
   void detach() {
     _refreshImpl = null;
+    adUnitId = null;
   }
 
   /// Whether the controller is currently attached to a mounted view.

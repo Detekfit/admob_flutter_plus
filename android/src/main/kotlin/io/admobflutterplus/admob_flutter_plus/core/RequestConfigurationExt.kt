@@ -1,10 +1,9 @@
 package io.admobflutterplus.admob_flutter_plus.core
 
 import com.google.android.libraries.ads.mobile.sdk.MobileAds
+import com.google.android.libraries.ads.mobile.sdk.common.AgeRestrictedTreatment
 import com.google.android.libraries.ads.mobile.sdk.common.RequestConfiguration
 import com.google.android.libraries.ads.mobile.sdk.common.RequestConfiguration.MaxAdContentRating
-import com.google.android.libraries.ads.mobile.sdk.common.RequestConfiguration.TagForChildDirectedTreatment
-import com.google.android.libraries.ads.mobile.sdk.common.RequestConfiguration.TagForUnderAgeOfConsent
 
 /** Builds and applies a global [RequestConfiguration] from the Dart map. */
 fun applyRequestConfiguration(map: Map<String, Any?>) {
@@ -25,25 +24,33 @@ fun applyRequestConfiguration(map: Map<String, Any?>) {
         builder.setMaxAdContentRating(value)
     }
 
-    (map["tagForChildDirectedTreatment"] as? String)?.let { tag ->
-        builder.setTagForChildDirectedTreatment(tag.toChildTag())
-    }
-
-    (map["tagForUnderAgeOfConsent"] as? String)?.let { tag ->
-        builder.setTagForUnderAgeOfConsent(tag.toUnderAgeTag())
+    resolveAgeRestrictedTreatment(map)?.let { treatment ->
+        builder.setAgeRestrictedTreatment(treatment)
     }
 
     MobileAds.setRequestConfiguration(builder.build())
 }
 
-private fun String.toChildTag(): TagForChildDirectedTreatment = when (this) {
-    "yes" -> TagForChildDirectedTreatment.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE
-    "no" -> TagForChildDirectedTreatment.TAG_FOR_CHILD_DIRECTED_TREATMENT_FALSE
-    else -> TagForChildDirectedTreatment.TAG_FOR_CHILD_DIRECTED_TREATMENT_UNSPECIFIED
-}
+/**
+ * Prefers the Next-Gen `ageRestrictedTreatment` field. Falls back to the
+ * deprecated COPPA / TFUA tags for older Dart callers.
+ */
+private fun resolveAgeRestrictedTreatment(map: Map<String, Any?>): AgeRestrictedTreatment? {
+    (map["ageRestrictedTreatment"] as? String)?.let { value ->
+        return when (value) {
+            "child" -> AgeRestrictedTreatment.CHILD
+            "teen" -> AgeRestrictedTreatment.TEEN
+            "unspecified" -> AgeRestrictedTreatment.UNSPECIFIED
+            else -> null
+        }
+    }
 
-private fun String.toUnderAgeTag(): TagForUnderAgeOfConsent = when (this) {
-    "yes" -> TagForUnderAgeOfConsent.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE
-    "no" -> TagForUnderAgeOfConsent.TAG_FOR_UNDER_AGE_OF_CONSENT_FALSE
-    else -> TagForUnderAgeOfConsent.TAG_FOR_UNDER_AGE_OF_CONSENT_UNSPECIFIED
+    val child = map["tagForChildDirectedTreatment"] as? String
+    val underAge = map["tagForUnderAgeOfConsent"] as? String
+    return when {
+        child == "yes" -> AgeRestrictedTreatment.CHILD
+        underAge == "yes" -> AgeRestrictedTreatment.TEEN
+        child != null || underAge != null -> AgeRestrictedTreatment.UNSPECIFIED
+        else -> null
+    }
 }

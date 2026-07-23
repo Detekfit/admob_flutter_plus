@@ -44,3 +44,16 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// Mediation is optional. Only when you add `com.google.ads.mediation:*` (or a
+// partner SDK), uncomment the excludes + adapter lines below. See README → Mediation.
+//
+// configurations.configureEach {
+//     exclude(group = "com.google.android.gms", module = "play-services-ads")
+//     exclude(group = "com.google.android.gms", module = "play-services-ads-lite")
+// }
+//
+// dependencies {
+//     implementation("com.unity3d.ads:unity-ads:4.19.0")
+//     implementation("com.google.ads.mediation:unity:4.19.0.0")
+// }

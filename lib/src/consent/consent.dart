@@ -10,7 +10,14 @@ enum ConsentDebugGeography {
   /// Behave as though the device is in the EEA.
   eea,
 
+  /// Behave as though the device is in a region with no regulation in force.
+  other,
+
+  /// Behave as though the device is in a regulated US state.
+  regulatedUsState,
+
   /// Behave as though the device is not in the EEA.
+  @Deprecated('Use ConsentDebugGeography.other instead')
   notEea,
 }
 

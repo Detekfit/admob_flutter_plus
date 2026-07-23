@@ -2,7 +2,7 @@ name: admob_flutter_plus
 description: >-
   Community Flutter plugin for Google Mobile Ads Next-Gen SDK (Android):
   banners, interstitials, rewarded, native templates, preloaders, UMP, app open.
-version: 0.1.2
+version: 0.1.3
 homepage: https://github.com/Detekfit/admob_flutter_plus
 repository: https://github.com/Detekfit/admob_flutter_plus
 issue_tracker: https://github.com/Detekfit/admob_flutter_plus/issues

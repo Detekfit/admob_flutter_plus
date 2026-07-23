@@ -35,7 +35,10 @@ class RewardedInterstitialAdPreloader {
       'adId': adId,
     });
     if (result['polled'] == true) {
-      return RewardedInterstitialAd.internalAdopt(adId);
+      return RewardedInterstitialAd.internalAdopt(
+        adId,
+        adUnitId: (result['adUnitId'] as String?) ?? adUnitId,
+      );
     }
     return null;
   }

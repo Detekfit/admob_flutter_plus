@@ -2,14 +2,17 @@ group = "io.admobflutterplus.admob_flutter_plus"
 version = "1.0-SNAPSHOT"
 
 buildscript {
-    val kotlinVersion = "2.3.20"
+    // Pin to the Flutter plugin ecosystem AGP (same as shared_preferences /
+    // google_mobile_ads). Host apps keep their own AGP/Gradle; do not chase
+    // bleeding-edge AGP here — mismatched classpaths break path/pub builds.
+    val kotlinVersion = "2.3.0"
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:9.0.1")
+        classpath("com.android.tools.build:gradle:8.13.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
 }
@@ -69,16 +72,20 @@ kotlin {
     }
 }
 
+// Mediation is optional. Host apps that add `com.google.ads.mediation:*` should
+// exclude legacy Play Services Ads modules in *their* app Gradle (see README).
+// Do not apply those excludes here by default — they are only needed with adapters.
+
 dependencies {
     // Google Mobile Ads Next-Gen SDK.
     // See CONTRIBUTING.md for the process to bump this after reading release notes.
-    implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.2.1")
+    implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.3.0")
     // User Messaging Platform (UMP) for consent.
     implementation("com.google.android.ump:user-messaging-platform:4.0.0")
     // Process-level lifecycle for app open ads.
-    implementation("androidx.lifecycle:lifecycle-process:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-process:2.11.0")
     // Coroutines for off-main-thread initialization.
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.mockito:mockito-core:5.0.0")

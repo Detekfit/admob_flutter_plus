@@ -235,7 +235,7 @@ object NativeTemplateAssetInflater {
         val width = parseLayoutSize(context, attr(parser, "layout_width"), matchDefault = true)
         val height = parseLayoutSize(context, attr(parser, "layout_height"), matchDefault = false)
 
-        val params = when (parent) {
+        val params: ViewGroup.MarginLayoutParams = when (parent) {
             is LinearLayout -> LinearLayout.LayoutParams(width, height).also { lp ->
                 attr(parser, "layout_weight")?.toFloatOrNull()?.let { lp.weight = it }
                 attr(parser, "layout_gravity")?.let { lp.gravity = parseGravity(it) }
@@ -247,21 +247,19 @@ object NativeTemplateAssetInflater {
             else -> ViewGroup.MarginLayoutParams(width, height)
         }
 
-        if (params is ViewGroup.MarginLayoutParams) {
-            val margin = attrDimensionPx(context, parser, "layout_margin")
-            val left = attrDimensionPx(context, parser, "layout_marginLeft")
-                ?: attrDimensionPx(context, parser, "layout_marginStart")
-            val right = attrDimensionPx(context, parser, "layout_marginRight")
-                ?: attrDimensionPx(context, parser, "layout_marginEnd")
-            val top = attrDimensionPx(context, parser, "layout_marginTop")
-            val bottom = attrDimensionPx(context, parser, "layout_marginBottom")
-            params.setMargins(
-                left ?: margin ?: 0,
-                top ?: margin ?: 0,
-                right ?: margin ?: 0,
-                bottom ?: margin ?: 0,
-            )
-        }
+        val margin = attrDimensionPx(context, parser, "layout_margin")
+        val left = attrDimensionPx(context, parser, "layout_marginLeft")
+            ?: attrDimensionPx(context, parser, "layout_marginStart")
+        val right = attrDimensionPx(context, parser, "layout_marginRight")
+            ?: attrDimensionPx(context, parser, "layout_marginEnd")
+        val top = attrDimensionPx(context, parser, "layout_marginTop")
+        val bottom = attrDimensionPx(context, parser, "layout_marginBottom")
+        params.setMargins(
+            left ?: margin ?: 0,
+            top ?: margin ?: 0,
+            right ?: margin ?: 0,
+            bottom ?: margin ?: 0,
+        )
         return params
     }
 
@@ -298,8 +296,9 @@ object NativeTemplateAssetInflater {
         val trimmed = raw.trim()
         val value = trimmed.replace(Regex("[^0-9.+-]"), "")
         val number = value.toFloatOrNull() ?: return null
-        val density = context.resources.displayMetrics.density
-        val scaled = context.resources.displayMetrics.scaledDensity
+        val metrics = context.resources.displayMetrics
+        val density = metrics.density
+        val scaled = density * context.resources.configuration.fontScale
         return when {
             trimmed.endsWith("sp") -> (number * scaled).toInt()
             trimmed.endsWith("px") -> number.toInt()

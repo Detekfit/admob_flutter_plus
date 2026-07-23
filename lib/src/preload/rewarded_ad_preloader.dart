@@ -35,7 +35,10 @@ class RewardedAdPreloader {
       'adId': adId,
     });
     if (result['polled'] == true) {
-      return RewardedAd.internalAdopt(adId);
+      return RewardedAd.internalAdopt(
+        adId,
+        adUnitId: (result['adUnitId'] as String?) ?? adUnitId,
+      );
     }
     return null;
   }

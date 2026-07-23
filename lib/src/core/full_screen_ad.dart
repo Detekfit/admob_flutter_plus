@@ -41,13 +41,16 @@ class FullScreenAdListener {
 abstract class FullScreenAd {
   /// Creates a [FullScreenAd] identified by [adId].
   @protected
-  FullScreenAd(this.adId) {
+  FullScreenAd(this.adId, {required this.adUnitId}) {
     AdsChannel.instance.register(adId, _handleEvent);
   }
 
   /// Process-unique identifier used to route native callbacks.
   @protected
   final String adId;
+
+  /// Ad unit ID used to request this ad (from the native SDK after load).
+  final String adUnitId;
 
   /// Listener for full-screen content events.
   FullScreenAdListener? listener;

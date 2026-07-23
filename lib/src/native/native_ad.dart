@@ -21,8 +21,15 @@ class NativeAd {
   /// Process-unique identifier used by template widgets to bind to this ad.
   final String adId;
 
-  /// The AdMob ad unit ID.
+  /// The AdMob ad unit ID used when constructing this ad.
   final String adUnitId;
+
+  String? _resolvedAdUnitId;
+
+  /// Ad unit ID reported by the native SDK after a successful [load].
+  ///
+  /// Falls back to [adUnitId] until load completes.
+  String get resolvedAdUnitId => _resolvedAdUnitId ?? adUnitId;
 
   /// Per-request targeting.
   final AdRequest request;
@@ -50,6 +57,10 @@ class NativeAd {
     });
     if (result['loaded'] == true) {
       _loaded = true;
+      final resolved = result['adUnitId'] as String?;
+      if (resolved != null && resolved.isNotEmpty) {
+        _resolvedAdUnitId = resolved;
+      }
       listener?.onAdLoaded?.call();
       return;
     }

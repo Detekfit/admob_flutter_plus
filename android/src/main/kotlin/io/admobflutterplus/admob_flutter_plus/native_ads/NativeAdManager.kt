@@ -39,9 +39,9 @@ class NativeAdManager(private val dispatcher: EventDispatcher) {
         NativeAdLoader.load(
             adRequest,
             object : NativeAdLoaderCallback {
-                override fun onNativeAdLoaded(ad: NativeAd) {
-                    ads[adId] = ad
-                    ad.adEventCallback = object : NativeAdEventCallback {
+                override fun onNativeAdLoaded(nativeAd: NativeAd) {
+                    ads[adId] = nativeAd
+                    nativeAd.adEventCallback = object : NativeAdEventCallback {
                         override fun onAdImpression() {
                             dispatcher.send("onAdImpression", adId)
                         }
@@ -50,13 +50,17 @@ class NativeAdManager(private val dispatcher: EventDispatcher) {
                             dispatcher.send("onAdClicked", adId)
                         }
                     }
-                    dispatcher.runOnMain { result.success(mapOf("loaded" to true)) }
-                }
-
-                override fun onAdFailedToLoad(error: LoadAdError) {
                     dispatcher.runOnMain {
                         result.success(
-                            mapOf("loaded" to false, "error" to error.toFlutterMap()),
+                            mapOf("loaded" to true, "adUnitId" to nativeAd.adUnitId),
+                        )
+                    }
+                }
+
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    dispatcher.runOnMain {
+                        result.success(
+                            mapOf("loaded" to false, "error" to adError.toFlutterMap()),
                         )
                     }
                 }

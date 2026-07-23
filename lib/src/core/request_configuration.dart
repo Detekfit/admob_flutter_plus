@@ -18,7 +18,22 @@ enum MaxAdContentRating {
   unspecified,
 }
 
+/// Age-restricted treatment applied to ad requests (GMA Next-Gen).
+///
+/// Replaces the deprecated COPPA / under-age-of-consent tags.
+enum AgeRestrictedTreatment {
+  /// Ad requests should receive child age treatment.
+  child,
+
+  /// Ad requests should receive teen age treatment.
+  teen,
+
+  /// No specific age-restricted treatment signal.
+  unspecified,
+}
+
 /// A three-state tag used for COPPA / GDPR style declarations.
+@Deprecated('Use AgeRestrictedTreatment instead')
 enum TagForChildDirectedTreatment {
   /// Marks the request as directed toward children.
   yes,
@@ -32,6 +47,7 @@ enum TagForChildDirectedTreatment {
 
 /// See [TagForChildDirectedTreatment]; applied to users under the age of
 /// consent.
+@Deprecated('Use AgeRestrictedTreatment instead')
 enum TagForUnderAgeOfConsent {
   /// Marks the user as under the age of consent.
   yes,
@@ -53,7 +69,10 @@ class RequestConfiguration {
   const RequestConfiguration({
     this.testDeviceIds,
     this.maxAdContentRating,
+    this.ageRestrictedTreatment,
+    @Deprecated('Use ageRestrictedTreatment instead')
     this.tagForChildDirectedTreatment,
+    @Deprecated('Use ageRestrictedTreatment instead')
     this.tagForUnderAgeOfConsent,
   });
 
@@ -63,10 +82,15 @@ class RequestConfiguration {
   /// Maximum content rating for served ads.
   final MaxAdContentRating? maxAdContentRating;
 
+  /// Age-restricted treatment for ad requests (child / teen / unspecified).
+  final AgeRestrictedTreatment? ageRestrictedTreatment;
+
   /// COPPA child-directed treatment tag.
+  @Deprecated('Use ageRestrictedTreatment instead')
   final TagForChildDirectedTreatment? tagForChildDirectedTreatment;
 
   /// Under-age-of-consent tag.
+  @Deprecated('Use ageRestrictedTreatment instead')
   final TagForUnderAgeOfConsent? tagForUnderAgeOfConsent;
 
   /// Serializes this configuration into a channel-friendly map.
@@ -75,9 +99,15 @@ class RequestConfiguration {
       if (testDeviceIds != null) 'testDeviceIds': testDeviceIds,
       if (maxAdContentRating != null)
         'maxAdContentRating': maxAdContentRating!.name,
+      if (ageRestrictedTreatment != null)
+        'ageRestrictedTreatment': ageRestrictedTreatment!.name,
+      // ignore: deprecated_member_use_from_same_package
       if (tagForChildDirectedTreatment != null)
+        // ignore: deprecated_member_use_from_same_package
         'tagForChildDirectedTreatment': tagForChildDirectedTreatment!.name,
+      // ignore: deprecated_member_use_from_same_package
       if (tagForUnderAgeOfConsent != null)
+        // ignore: deprecated_member_use_from_same_package
         'tagForUnderAgeOfConsent': tagForUnderAgeOfConsent!.name,
     };
   }

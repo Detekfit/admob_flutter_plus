@@ -33,7 +33,9 @@ Future<void> main() async {
     } catch (_) {}
   }
 
-  await MobileAds.instance.setRequestConfiguration(const RequestConfiguration(maxAdContentRating: MaxAdContentRating.g));
+  await MobileAds.instance.setRequestConfiguration(
+    const RequestConfiguration(maxAdContentRating: MaxAdContentRating.g),
+  );
 
   runApp(const DemoApp());
 }
@@ -99,30 +101,23 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> openAdInspector() async {
+    try {
+      await MobileAds.instance.openAdInspector();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ad Inspector: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admob Flutter+'),
         actions: [
-          IconButton(
-            tooltip: 'Configure ad demo',
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: openDemoConfig,
-          ),
-          IconButton(
-            tooltip: 'Ad Inspector (test devices)',
-            icon: const Icon(Icons.search),
-            onPressed: () async {
-              try {
-                await MobileAds.instance.openAdInspector();
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ad Inspector: $e')));
-                }
-              }
-            },
-          ),
+          IconButton(tooltip: 'Configure ad demo', icon: const Icon(Icons.edit_outlined), onPressed: openDemoConfig),
+          TextButton.icon(onPressed: openAdInspector, icon: const Icon(Icons.bug_report_outlined), label: const Text('Ad Inspector')),
         ],
       ),
       body: KeyedSubtree(key: ValueKey<Object>('$tabIndex-$demoConfig'), child: section),

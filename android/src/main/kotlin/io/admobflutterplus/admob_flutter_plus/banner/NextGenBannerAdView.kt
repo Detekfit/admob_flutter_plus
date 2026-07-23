@@ -178,7 +178,7 @@ class NextGenBannerAdView(
                         return
                     }
                     bannerAd = ad
-                    invokeSafe("onAdLoaded")
+                    invokeSafe("onAdLoaded", mapOf("adUnitId" to ad.adUnitId))
                     invokeSafe("onIsCollapsible", mapOf("isCollapsible" to ad.isCollapsible()))
                     ad.adEventCallback = object : BannerAdEventCallback {
                         override fun onAdImpression() {
@@ -194,16 +194,16 @@ class NextGenBannerAdView(
                             invokeSafe("onAdRefreshed")
                         }
 
-                        override fun onAdFailedToRefresh(error: LoadAdError) {
-                            invokeSafe("onAdFailedToRefresh", error.toFlutterMap())
+                        override fun onAdFailedToRefresh(adError: LoadAdError) {
+                            invokeSafe("onAdFailedToRefresh", adError.toFlutterMap())
                         }
                     }
                 }
 
-                override fun onAdFailedToLoad(error: LoadAdError) {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
                     if (disposed || adView !== view) return
-                    Log.w(TAG, "Banner failed to load: ${error.code} ${error.message}")
-                    invokeSafe("onAdFailedToLoad", error.toFlutterMap())
+                    Log.w(TAG, "Banner failed to load: ${adError.code} ${adError.message}")
+                    invokeSafe("onAdFailedToLoad", adError.toFlutterMap())
                 }
             },
         )

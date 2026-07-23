@@ -116,7 +116,7 @@ class AdmobFlutterPlusPlugin :
         fun request() = args?.get("request") as? Map<String, Any?>
 
         when (call.method) {
-            "initialize" -> initialize(result)
+            "initialize" -> initialize(args, result)
             "getVersion" -> result.success(MobileAds.getVersion().toString())
             "setRequestConfiguration" -> {
                 @Suppress("UNCHECKED_CAST")
@@ -190,7 +190,7 @@ class AdmobFlutterPlusPlugin :
                 result.success(null)
             }
             "pollInterstitialPreload" ->
-                result.success(mapOf("polled" to preloaderManager.pollInterstitial(adUnitId(), adId())))
+                result.success(preloaderManager.pollInterstitial(adUnitId(), adId()))
             "isInterstitialPreloadAvailable" ->
                 result.success(preloaderManager.isInterstitialAvailable(adUnitId()))
             "interstitialPreloadCount" ->
@@ -206,7 +206,7 @@ class AdmobFlutterPlusPlugin :
                 result.success(null)
             }
             "pollRewardedPreload" ->
-                result.success(mapOf("polled" to preloaderManager.pollRewarded(adUnitId(), adId())))
+                result.success(preloaderManager.pollRewarded(adUnitId(), adId()))
             "isRewardedPreloadAvailable" ->
                 result.success(preloaderManager.isRewardedAvailable(adUnitId()))
             "rewardedPreloadCount" ->
@@ -222,9 +222,7 @@ class AdmobFlutterPlusPlugin :
                 result.success(null)
             }
             "pollRewardedInterstitialPreload" ->
-                result.success(
-                    mapOf("polled" to preloaderManager.pollRewardedInterstitial(adUnitId(), adId())),
-                )
+                result.success(preloaderManager.pollRewardedInterstitial(adUnitId(), adId()))
             "isRewardedInterstitialPreloadAvailable" ->
                 result.success(preloaderManager.isRewardedInterstitialAvailable(adUnitId()))
             "rewardedInterstitialPreloadCount" ->
@@ -241,11 +239,25 @@ class AdmobFlutterPlusPlugin :
     private fun bufferSize(args: Map<*, *>?): Int =
         (args?.get("bufferSize") as? Number)?.toInt() ?: 2
 
-    private fun initialize(result: Result) {
-        val config = InitializationConfig.Builder(readApplicationId()).build()
-        MobileAds.initialize(applicationContext, config) {
+    private fun initialize(args: Map<*, *>?, result: Result) {
+        val builder = InitializationConfig.Builder(readApplicationId())
+        if (args?.get("disableSdkCrashReporting") as? Boolean == true) {
+            builder.disableSdkCrashReporting()
+        }
+        val config = builder.build()
+        MobileAds.initialize(applicationContext, config) { initializationStatus ->
             initialized = true
-            dispatcher.runOnMain { result.success(null) }
+            val adapterStatuses = LinkedHashMap<String, Any?>()
+            for ((name, status) in initializationStatus.adapterStatusMap) {
+                adapterStatuses[name] = mapOf(
+                    "state" to status.initializationState.name,
+                    "description" to status.description,
+                    "latency" to status.latency,
+                )
+            }
+            dispatcher.runOnMain {
+                result.success(mapOf("adapterStatuses" to adapterStatuses))
+            }
         }
     }
 

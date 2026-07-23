@@ -114,6 +114,11 @@ class _BannerAdViewState extends State<BannerAdView> {
     switch (call.method) {
       case 'onAdLoaded':
         if (_failed) setState(() => _failed = false);
+        final map = _asMap(args);
+        final resolved = map['adUnitId'] as String?;
+        if (resolved != null && resolved.isNotEmpty) {
+          widget.controller?.adUnitId = resolved;
+        }
         listener?.onAdLoaded?.call();
         break;
       case 'onAdFailedToLoad':

@@ -34,13 +34,17 @@ class RewardedAdManager(private val dispatcher: EventDispatcher) {
             object : AdLoadCallback<RewardedAd> {
                 override fun onAdLoaded(ad: RewardedAd) {
                     ads[adId] = ad
-                    dispatcher.runOnMain { result.success(mapOf("loaded" to true)) }
-                }
-
-                override fun onAdFailedToLoad(error: LoadAdError) {
                     dispatcher.runOnMain {
                         result.success(
-                            mapOf("loaded" to false, "error" to error.toFlutterMap()),
+                            mapOf("loaded" to true, "adUnitId" to ad.adUnitId),
+                        )
+                    }
+                }
+
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    dispatcher.runOnMain {
+                        result.success(
+                            mapOf("loaded" to false, "error" to adError.toFlutterMap()),
                         )
                     }
                 }
@@ -64,13 +68,15 @@ class RewardedAdManager(private val dispatcher: EventDispatcher) {
                 dispatcher.send("onAdDismissedFullScreenContent", adId)
             }
 
-            override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
+            override fun onAdFailedToShowFullScreenContent(
+                fullScreenContentError: FullScreenContentError,
+            ) {
                 AdCoordinator.release()
                 ads.remove(adId)
                 dispatcher.send(
                     "onAdFailedToShowFullScreenContent",
                     adId,
-                    error.toFlutterMap(),
+                    fullScreenContentError.toFlutterMap(),
                 )
             }
 

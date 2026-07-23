@@ -13,12 +13,13 @@ typedef RewardedAdListener = FullScreenAdListener;
 /// Load with [RewardedAd.load] (throws [AdLoadException] on failure), then
 /// [show], supplying an [OnUserEarnedReward] callback.
 class RewardedAd extends RewardedFullScreenAd {
-  RewardedAd._(super.adId);
+  RewardedAd._(super.adId, {required super.adUnitId});
 
   /// Internal: adopts a preloaded native ad already registered under [adId].
   ///
   /// Not part of the public API; used by [RewardedAdPreloader].
-  static RewardedAd internalAdopt(String adId) => RewardedAd._(adId);
+  static RewardedAd internalAdopt(String adId, {required String adUnitId}) =>
+      RewardedAd._(adId, adUnitId: adUnitId);
 
   @override
   String get showMethod => 'showRewarded';
@@ -39,7 +40,10 @@ class RewardedAd extends RewardedFullScreenAd {
       'request': request.toMap(),
     });
     if (result['loaded'] == true) {
-      return RewardedAd._(adId);
+      return RewardedAd._(
+        adId,
+        adUnitId: (result['adUnitId'] as String?) ?? adUnitId,
+      );
     }
     final error = result['error'];
     throw AdLoadException(

@@ -13,12 +13,13 @@ typedef InterstitialAdListener = FullScreenAdListener;
 /// manual [dispose] is required. If you load an ad but never show it, call
 /// [dispose] to release native resources.
 class InterstitialAd extends FullScreenAd {
-  InterstitialAd._(super.adId);
+  InterstitialAd._(super.adId, {required super.adUnitId});
 
   /// Internal: adopts a preloaded native ad already registered under [adId].
   ///
   /// Not part of the public API; used by [InterstitialAdPreloader].
-  static InterstitialAd internalAdopt(String adId) => InterstitialAd._(adId);
+  static InterstitialAd internalAdopt(String adId, {required String adUnitId}) =>
+      InterstitialAd._(adId, adUnitId: adUnitId);
 
   @override
   String get showMethod => 'showInterstitial';
@@ -45,7 +46,10 @@ class InterstitialAd extends FullScreenAd {
       'request': request.toMap(),
     });
     if (result['loaded'] == true) {
-      return InterstitialAd._(adId);
+      return InterstitialAd._(
+        adId,
+        adUnitId: (result['adUnitId'] as String?) ?? adUnitId,
+      );
     }
     throw AdLoadException(AdError.fromMap(_errorMap(result)));
   }

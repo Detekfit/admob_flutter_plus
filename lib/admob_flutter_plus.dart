@@ -12,6 +12,7 @@ export 'src/core/ad_error.dart';
 export 'src/core/ad_request.dart';
 export 'src/core/app_state_event_notifier.dart';
 export 'src/core/full_screen_ad.dart' show FullScreenAdListener;
+export 'src/core/initialization_status.dart';
 export 'src/core/mobile_ads.dart';
 export 'src/core/request_configuration.dart';
 

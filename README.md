@@ -1,6 +1,6 @@
 # admob_flutter_plus
 
-[![pub version](https://img.shields.io/badge/pub-0.1.2-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
+[![pub version](https://img.shields.io/badge/pub-0.1.3-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ![Admob Flutter Plus Screenshot](https://raw.githubusercontent.com/Detekfit/admob_flutter_plus/main/screenshots/admob_flutter_plus.webp)
@@ -12,7 +12,7 @@ wrapped in an idiomatic, Future-first Dart API.
 
 > **Unofficial package.** `admob_flutter_plus` is **not** published, endorsed,
 > or maintained by Google. It wraps the official
-> `com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.2.1`.
+> `com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.3.0`.
 
 ## Screenshots
 
@@ -36,7 +36,7 @@ no-ops where sensible.
 
 ```yaml
 dependencies:
-  admob_flutter_plus: ^0.1.0
+  admob_flutter_plus: ^0.1.3
 ```
 
 ### AndroidManifest setup
@@ -48,6 +48,14 @@ inside `<application>`:
 <meta-data
     android:name="com.google.android.gms.ads.APPLICATION_ID"
     android:value="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" />
+```
+
+Optional — hard-disable Ad Inspector for a build (GMA Next-Gen 1.3.0+):
+
+```xml
+<meta-data
+    android:name="com.google.android.libraries.ads.mobile.sdk.flag.DISABLE_AD_INSPECTOR"
+    android:value="true" />
 ```
 
 Banner video ads require hardware acceleration on the hosting Activity. This is
@@ -80,11 +88,21 @@ Future<void> main() async {
 Other core calls:
 
 ```dart
+await MobileAds.instance.initialize(
+  // Optional: let Crashlytics own crashes exclusively.
+  disableSdkCrashReporting: true,
+);
 await MobileAds.instance.setRequestConfiguration(
-  const RequestConfiguration(testDeviceIds: ['YOUR_TEST_DEVICE_ID']),
+  const RequestConfiguration(
+    testDeviceIds: ['YOUR_TEST_DEVICE_ID'],
+    ageRestrictedTreatment: AgeRestrictedTreatment.unspecified,
+  ),
 );
 await MobileAds.instance.openAdInspector(); // test devices only
 final version = await MobileAds.instance.getVersion();
+
+// After load, full-screen / native ads expose the SDK-reported ad unit ID:
+// interstitial.adUnitId, native.resolvedAdUnitId, bannerController.adUnitId
 ```
 
 ## Banner ads
@@ -333,11 +351,57 @@ const AdRequest(
 - **`AdSize.anchored()`** replaces the deprecated current-orientation adaptive
   size with the large anchored adaptive API.
 
-## Mediation warning
+## Mediation (AdMob + third-party networks)
 
-Do **not** mix this plugin with legacy `google_mobile_ads` mediation adapters.
-The Next-Gen SDK and legacy GMS ads classes conflict and builds fail with
-duplicate class errors.
+GMA Next-Gen **supports AdMob Mediation**. Adapters are discovered automatically
+on the Android classpath when you await `MobileAds.instance.initialize()` —
+no Dart registration API is required.
+
+Do **not** use the official Flutter packages under
+[`gma_mediation_*`](https://github.com/googleads/googleads-mobile-flutter/tree/main/packages/mediation)
+or `google_mobile_ads` with this plugin. Those target the **legacy** Play
+Services Ads SDK and will conflict with Next-Gen.
+
+### Setup
+
+1. Configure mediation groups and ad sources in the [AdMob console](https://apps.admob.com/).
+2. In your **host app** `android/app/build.gradle.kts`, add partner adapter
+   artifacts from the
+   [Next-Gen mediation guides](https://developers.google.com/admob/android/next-gen/mediation)
+   and exclude legacy GMS ads modules (adapters still declare them):
+
+```kotlin
+dependencies {
+    // Pin the latest version from Google's Next-Gen mediation docs for that network.
+    implementation("com.google.ads.mediation:facebook:6.21.0.4")
+}
+
+// Only needed when you add mediation adapters (not required for AdMob-only).
+configurations.configureEach {
+    exclude(group = "com.google.android.gms", module = "play-services-ads")
+    exclude(group = "com.google.android.gms", module = "play-services-ads-lite")
+}
+```
+
+Skip the `configurations.configureEach` excludes if you are **not** using
+third-party mediation adapters.
+
+3. Await initialization (and optionally inspect adapter status) before loading ads:
+
+```dart
+final status = await MobileAds.instance.initialize();
+for (final entry in status.adapterStatuses.entries) {
+  // Next-Gen states: complete, failed, initializing, notStarted, timedOut.
+  debugPrint(
+    '${entry.key}: ${entry.value.state} '
+    '(complete=${entry.value.isComplete}, ${entry.value.latency}ms)',
+  );
+}
+```
+
+Partner-specific steps (Meta, AppLovin, Unity, …) are documented per network in
+Google’s [Next-Gen mediation](https://developers.google.com/admob/android/next-gen/mediation)
+guides.
 
 ## Troubleshooting
 
@@ -348,6 +412,7 @@ duplicate class errors.
 | App stuck on splash              | Wrap consent in `try/catch`; always call `runApp()`           |
 | Not seeing test ads              | Register your device via `RequestConfiguration.testDeviceIds` |
 | Banner clipped                   | Give it a bounded `height` (≥100 dp for anchored/collapsible) |
+| Adapter never “READY”            | Next-Gen reports `COMPLETE` (use `status.isComplete`)         |
 
 ## Known native SDK notes
 

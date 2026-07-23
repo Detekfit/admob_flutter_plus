@@ -39,10 +39,11 @@ class PreloaderManager(
         InterstitialAdPreloader.start(adUnitId, config(adUnitId, bufferSize, request))
     }
 
-    fun pollInterstitial(adUnitId: String, adId: String): Boolean {
-        val ad = InterstitialAdPreloader.pollAd(adUnitId) ?: return false
+    fun pollInterstitial(adUnitId: String, adId: String): Map<String, Any?> {
+        val ad = InterstitialAdPreloader.pollAd(adUnitId)
+            ?: return mapOf("polled" to false)
         interstitialManager.adopt(adId, ad)
-        return true
+        return mapOf("polled" to true, "adUnitId" to ad.adUnitId)
     }
 
     fun isInterstitialAvailable(adUnitId: String): Boolean =
@@ -61,10 +62,11 @@ class PreloaderManager(
         RewardedAdPreloader.start(adUnitId, config(adUnitId, bufferSize, request))
     }
 
-    fun pollRewarded(adUnitId: String, adId: String): Boolean {
-        val ad = RewardedAdPreloader.pollAd(adUnitId) ?: return false
+    fun pollRewarded(adUnitId: String, adId: String): Map<String, Any?> {
+        val ad = RewardedAdPreloader.pollAd(adUnitId)
+            ?: return mapOf("polled" to false)
         rewardedManager.adopt(adId, ad)
-        return true
+        return mapOf("polled" to true, "adUnitId" to ad.adUnitId)
     }
 
     fun isRewardedAvailable(adUnitId: String): Boolean =
@@ -87,10 +89,11 @@ class PreloaderManager(
         RewardedInterstitialAdPreloader.start(adUnitId, config(adUnitId, bufferSize, request))
     }
 
-    fun pollRewardedInterstitial(adUnitId: String, adId: String): Boolean {
-        val ad = RewardedInterstitialAdPreloader.pollAd(adUnitId) ?: return false
+    fun pollRewardedInterstitial(adUnitId: String, adId: String): Map<String, Any?> {
+        val ad = RewardedInterstitialAdPreloader.pollAd(adUnitId)
+            ?: return mapOf("polled" to false)
         rewardedInterstitialManager.adopt(adId, ad)
-        return true
+        return mapOf("polled" to true, "adUnitId" to ad.adUnitId)
     }
 
     fun isRewardedInterstitialAvailable(adUnitId: String): Boolean =

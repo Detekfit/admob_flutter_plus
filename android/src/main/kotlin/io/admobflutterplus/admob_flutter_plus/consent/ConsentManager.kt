@@ -62,10 +62,12 @@ class ConsentManager(messenger: BinaryMessenger, private val context: Context) :
         if (debugGeography != null && debugGeography != "disabled") {
             val debug = ConsentDebugSettings.Builder(context)
                 .setDebugGeography(
-                    if (debugGeography == "eea") {
-                        ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA
-                    } else {
-                        ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_NOT_EEA
+                    when (debugGeography) {
+                        "eea" -> ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA
+                        "regulatedUsState" ->
+                            ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_REGULATED_US_STATE
+                        // "other", legacy "notEea", and any unknown non-disabled value.
+                        else -> ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_OTHER
                     },
                 )
             testIds?.forEach { debug.addTestDeviceHashedId(it) }

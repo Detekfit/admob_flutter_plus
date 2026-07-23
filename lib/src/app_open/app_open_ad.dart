@@ -15,7 +15,7 @@ typedef AppOpenAdListener = FullScreenAdListener;
 /// `AppStateEventNotifier`, not Flutter's `WidgetsBindingObserver`, so that
 /// showing another full-screen ad is not mistaken for backgrounding.
 class AppOpenAd extends FullScreenAd {
-  AppOpenAd._(super.adId) : _loadTime = DateTime.now();
+  AppOpenAd._(super.adId, {required super.adUnitId}) : _loadTime = DateTime.now();
 
   /// Ads are considered expired after this duration.
   static const Duration maxCacheDuration = Duration(hours: 4);
@@ -44,7 +44,10 @@ class AppOpenAd extends FullScreenAd {
       'request': request.toMap(),
     });
     if (result['loaded'] == true) {
-      return AppOpenAd._(adId);
+      return AppOpenAd._(
+        adId,
+        adUnitId: (result['adUnitId'] as String?) ?? adUnitId,
+      );
     }
     final error = result['error'];
     throw AdLoadException(

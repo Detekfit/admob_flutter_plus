@@ -8,7 +8,7 @@ import 'full_screen_ad.dart';
 abstract class RewardedFullScreenAd extends FullScreenAd {
   /// Creates a [RewardedFullScreenAd].
   @protected
-  RewardedFullScreenAd(super.adId);
+  RewardedFullScreenAd(super.adId, {required super.adUnitId});
 
   OnUserEarnedReward? _onUserEarnedReward;
 

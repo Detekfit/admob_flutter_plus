@@ -5,6 +5,47 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.1.3
+
+### Added
+
+- AdMob Mediation support for GMA Next-Gen: Gradle excludes for legacy
+  `play-services-ads` / `play-services-ads-lite`, and
+  `MobileAds.initialize()` now returns `InitializationStatus` with per-adapter
+  `AdapterStatus` (`AdapterInitializationState`: `complete`, `failed`,
+  `initializing`, `notStarted`, `timedOut`, plus `isComplete`) and
+  description/latency. Documented Next-Gen adapter setup (Maven
+  `com.google.ads.mediation:*` in the host app — not `gma_mediation_*` /
+  `google_mobile_ads`).
+- `RequestConfiguration.ageRestrictedTreatment` (`child` / `teen` /
+  `unspecified`) matching GMA Next-Gen `setAgeRestrictedTreatment`.
+- `ConsentDebugGeography.other` and `regulatedUsState` (UMP debug geography).
+- GMA Next-Gen **1.3.0** API surface:
+  - `MobileAds.initialize(disableSdkCrashReporting: …)`
+  - `Ad.getAdUnitId()` exposed as `adUnitId` on full-screen ads,
+    `NativeAd.resolvedAdUnitId`, and `BannerAdController.adUnitId`
+  - README docs for the `DISABLE_AD_INSPECTOR` manifest flag
+
+### Changed
+
+- Android library deps bumped: GMA Next-Gen `ads-mobile-sdk:1.3.0`,
+  `lifecycle-process:2.11.0`, `kotlinx-coroutines-android:1.11.0` (UMP
+  remains `4.0.0`). Plugin AGP stays on Flutter-ecosystem `8.13.1` (not
+  host AGP — apps keep their own Gradle/AGP).
+- Kotlin callbacks renamed to match AdMob SDK parameter names (silences
+  named-argument warnings).
+
+### Deprecated
+
+- `TagForChildDirectedTreatment` / `TagForUnderAgeOfConsent` — use
+  `AgeRestrictedTreatment`.
+- `ConsentDebugGeography.notEea` — use `ConsentDebugGeography.other`.
+
+### Fixed
+
+- Native template inflater: avoid deprecated `scaledDensity` and redundant
+  `MarginLayoutParams` type check.
+
 ## 0.1.2
 
 ### Added

@@ -13,13 +13,16 @@ typedef RewardedInterstitialAdListener = FullScreenAdListener;
 /// Combines interstitial behavior with a reward callback. Load with
 /// [RewardedInterstitialAd.load], then [show] with an [OnUserEarnedReward].
 class RewardedInterstitialAd extends RewardedFullScreenAd {
-  RewardedInterstitialAd._(super.adId);
+  RewardedInterstitialAd._(super.adId, {required super.adUnitId});
 
   /// Internal: adopts a preloaded native ad already registered under [adId].
   ///
   /// Not part of the public API; used by [RewardedInterstitialAdPreloader].
-  static RewardedInterstitialAd internalAdopt(String adId) =>
-      RewardedInterstitialAd._(adId);
+  static RewardedInterstitialAd internalAdopt(
+    String adId, {
+    required String adUnitId,
+  }) =>
+      RewardedInterstitialAd._(adId, adUnitId: adUnitId);
 
   @override
   String get showMethod => 'showRewardedInterstitial';
@@ -40,7 +43,10 @@ class RewardedInterstitialAd extends RewardedFullScreenAd {
       'request': request.toMap(),
     });
     if (result['loaded'] == true) {
-      return RewardedInterstitialAd._(adId);
+      return RewardedInterstitialAd._(
+        adId,
+        adUnitId: (result['adUnitId'] as String?) ?? adUnitId,
+      );
     }
     final error = result['error'];
     throw AdLoadException(
