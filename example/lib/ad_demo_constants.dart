@@ -18,6 +18,7 @@ class AdDemoIds {
   static const String rewardedInterstitial = 'ca-app-pub-3940256099942544/5354046379';
   static const String appOpen = 'ca-app-pub-3940256099942544/9257395921';
   static const String nativeAd = 'ca-app-pub-3940256099942544/2247696110';
+  static const String pictureInPicture = 'ca-app-pub-3940256099942544/9657123429';
 
   /// Deliberately invalid unit used to demonstrate load-failure handling.
   static const String invalidAdUnit = 'ca-app-pub-0000000000000000/0000000000';

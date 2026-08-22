@@ -79,7 +79,7 @@ kotlin {
 dependencies {
     // Google Mobile Ads Next-Gen SDK.
     // See CONTRIBUTING.md for the process to bump this after reading release notes.
-    implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.3.0")
+    implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.4.0")
     // User Messaging Platform (UMP) for consent.
     implementation("com.google.android.ump:user-messaging-platform:4.0.0")
     // Process-level lifecycle for app open ads.

@@ -7,6 +7,7 @@ import 'sections/app_open_section.dart';
 import 'sections/banner_section.dart';
 import 'sections/interstitial_section.dart';
 import 'sections/native_section.dart';
+import 'sections/picture_in_picture_section.dart';
 import 'sections/rewarded_section.dart';
 
 Future<void> main() async {
@@ -75,6 +76,7 @@ class HomePageState extends State<HomePage> {
     NavigationDestination(icon: Icon(Icons.card_giftcard), label: 'Rewarded'),
     NavigationDestination(icon: Icon(Icons.article_outlined), label: 'Native'),
     NavigationDestination(icon: Icon(Icons.open_in_browser), label: 'App Open'),
+    NavigationDestination(icon: Icon(Icons.picture_in_picture_alt_outlined), label: 'PiP'),
   ];
 
   Widget get section {
@@ -89,6 +91,8 @@ class HomePageState extends State<HomePage> {
         return NativeSection(config: demoConfig);
       case 4:
         return AppOpenSection(config: demoConfig);
+      case 5:
+        return PictureInPictureSection(config: demoConfig);
       default:
         return BannerSection(config: demoConfig);
     }

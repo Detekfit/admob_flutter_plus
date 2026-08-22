@@ -2,7 +2,8 @@
 
 Demonstrates every ad format supported by `admob_flutter_plus` on Android:
 banner, interstitial, rewarded / rewarded interstitial, native (built-in +
-custom asset XML), and app open — plus UMP consent and Ad Inspector.
+custom asset XML), app open, and picture-in-picture (open beta) — plus UMP
+consent and Ad Inspector.
 
 ## Run
 

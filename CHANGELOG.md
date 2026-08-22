@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.1.4
+
+### Added
+
+- Picture-in-picture ads (GMA Next-Gen **1.4.0** open beta): `PictureInPictureAd`
+  with `load` / `show` / `hide` / `dispose`, `PictureInPictureAdOptions`
+  (position + presentation scope), and `PictureInPictureAdListener`
+  (`onAdShown` / `onAdHidden` plus shared impression/click/fullscreen callbacks).
+- Example app **PiP** tab with Google test unit
+  `ca-app-pub-3940256099942544/9657123429`.
+
+### Changed
+
+- Android GMA Next-Gen dependency bumped to `ads-mobile-sdk:1.4.0`.
+
 ## 0.1.3
 
 ### Added

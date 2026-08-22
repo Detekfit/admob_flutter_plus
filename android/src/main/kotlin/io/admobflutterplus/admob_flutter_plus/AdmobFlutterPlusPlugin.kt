@@ -17,6 +17,7 @@ import io.admobflutterplus.admob_flutter_plus.native_ads.NativeAdManager
 import io.admobflutterplus.admob_flutter_plus.native_ads.NativeAdViewFactory
 import io.admobflutterplus.admob_flutter_plus.native_ads.NativeCustomAdViewFactory
 import io.admobflutterplus.admob_flutter_plus.native_ads.NativeTemplate
+import io.admobflutterplus.admob_flutter_plus.pip.PictureInPictureAdManager
 import io.admobflutterplus.admob_flutter_plus.preload.PreloaderManager
 import io.admobflutterplus.admob_flutter_plus.rewarded.RewardedAdManager
 import io.admobflutterplus.admob_flutter_plus.rewarded.rewarded_interstitial.RewardedInterstitialAdManager
@@ -42,6 +43,7 @@ class AdmobFlutterPlusPlugin :
     private lateinit var rewardedManager: RewardedAdManager
     private lateinit var rewardedInterstitialManager: RewardedInterstitialAdManager
     private lateinit var appOpenManager: AppOpenAdManager
+    private lateinit var pictureInPictureManager: PictureInPictureAdManager
     private lateinit var nativeManager: NativeAdManager
     private lateinit var preloaderManager: PreloaderManager
     private lateinit var appStateNotifier: AppStateNotifier
@@ -60,6 +62,7 @@ class AdmobFlutterPlusPlugin :
         rewardedManager = RewardedAdManager(dispatcher)
         rewardedInterstitialManager = RewardedInterstitialAdManager(dispatcher)
         appOpenManager = AppOpenAdManager(dispatcher)
+        pictureInPictureManager = PictureInPictureAdManager(dispatcher)
         nativeManager = NativeAdManager(dispatcher)
         preloaderManager = PreloaderManager(
             interstitialManager,
@@ -104,6 +107,7 @@ class AdmobFlutterPlusPlugin :
         rewardedManager.disposeAll()
         rewardedInterstitialManager.disposeAll()
         appOpenManager.disposeAll()
+        pictureInPictureManager.disposeAll()
         nativeManager.disposeAll()
     }
 
@@ -170,6 +174,24 @@ class AdmobFlutterPlusPlugin :
             }
             "disposeAppOpen" -> {
                 appOpenManager.dispose(adId())
+                result.success(null)
+            }
+
+            // Picture-in-picture
+            "loadPictureInPicture" ->
+                pictureInPictureManager.load(adId(), adUnitId(), request(), result)
+            "showPictureInPicture" -> {
+                @Suppress("UNCHECKED_CAST")
+                val options = args?.get("options") as? Map<String, Any?>
+                pictureInPictureManager.show(adId(), activity, options)
+                result.success(null)
+            }
+            "hidePictureInPicture" -> {
+                pictureInPictureManager.hide(adId())
+                result.success(null)
+            }
+            "disposePictureInPicture" -> {
+                pictureInPictureManager.dispose(adId())
                 result.success(null)
             }
 

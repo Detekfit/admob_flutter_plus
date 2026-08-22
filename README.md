@@ -1,7 +1,8 @@
 # admob_flutter_plus
 
-[![pub version](https://img.shields.io/badge/pub-0.1.3-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
+[![pub version](https://img.shields.io/badge/pub-0.1.4-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![New](https://img.shields.io/badge/NEW-Picture--in--Picture%20ads-brightgreen)](#picture-in-picture-ads-open-beta-new)
 
 ![Admob Flutter Plus Screenshot](https://raw.githubusercontent.com/Detekfit/admob_flutter_plus/main/screenshots/admob_flutter_plus.webp)
 
@@ -10,9 +11,13 @@ on Android — banners, interstitials, rewarded ads, native templates (built-in
 or custom XML from Flutter assets), preloaders, UMP consent, and app open ads,
 wrapped in an idiomatic, Future-first Dart API.
 
+> **New in 0.1.4:** [Picture-in-picture ads](#picture-in-picture-ads-open-beta-new)
+> (GMA Next-Gen open beta) — a floating, draggable ad that stays on screen while
+> users keep scrolling, reading, or playing.
+
 > **Unofficial package.** `admob_flutter_plus` is **not** published, endorsed,
 > or maintained by Google. It wraps the official
-> `com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.3.0`.
+> `com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.4.0`.
 
 ## Screenshots
 
@@ -36,7 +41,7 @@ no-ops where sensible.
 
 ```yaml
 dependencies:
-  admob_flutter_plus: ^0.1.3
+  admob_flutter_plus: ^0.1.4
 ```
 
 ### AndroidManifest setup
@@ -257,6 +262,53 @@ AppStateEventNotifier.appStateStream.listen((state) async {
 ```
 
 App open ads expire four hours after loading; `isAvailable()` enforces this.
+
+## Picture-in-picture ads (open beta) ![NEW](https://img.shields.io/badge/NEW-brightgreen)
+
+> **Use case.** Show a small floating ad over content — articles, feeds, or
+> gameplay — so users keep using your app while the ad stays visible and
+> draggable. Prefer this when a full-screen interstitial would interrupt the
+> session.
+
+Requires GMA Next-Gen **1.4.0+**. PiP ads snap to a screen corner and are
+**not** consumed when hidden — you can `show` again until `dispose`.
+
+**Test ad unit:** `ca-app-pub-3940256099942544/9657123429`
+
+```dart
+final ad = await PictureInPictureAd.load(
+  adUnitId: 'ca-app-pub-3940256099942544/9657123429',
+);
+ad.listener = PictureInPictureAdListener(
+  onAdShown: () {},
+  onAdHidden: () {},
+  onAdImpression: () {},
+  onAdClicked: () {},
+  onAdFailedToShowFullScreenContent: (e) {},
+);
+await ad.show(
+  options: const PictureInPictureAdOptions(
+    position: PictureInPictureAdPosition.topLeft,
+    presentationScope: PictureInPictureAdPresentationScope.screen,
+  ),
+);
+await ad.hide(); // removes the window; keeps the instance
+await ad.show(); // can show again
+await ad.dispose(); // releases native resources when finished
+```
+
+| Option | Values | Notes |
+| --- | --- | --- |
+| **Position** | `defaultPosition`, `topLeft`, `topRight`, `bottomLeft`, `bottomRight` | Initial corner; users can still drag. `defaultPosition` is SDK-managed (currently bottom-right). |
+| **Presentation scope** | `screen` (default), `application` | `screen` ends with the Activity. `application` stays across routes — hold a longer-lived reference yourself. |
+
+Lifecycle tips:
+
+- Wire `PictureInPictureAdListener` for `onAdShown` / `onAdHidden` plus the usual impression, click, and full-screen overlay callbacks.
+- Call `dispose()` when you are done (and in `State.dispose` for screen-scoped ads).
+- There is no PiP preloader in the Next-Gen SDK.
+
+Try it in the example app’s **PiP** tab.
 
 ## Native ads
 

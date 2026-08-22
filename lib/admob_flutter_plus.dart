@@ -36,6 +36,11 @@ export 'src/rewarded/rewarded_interstitial/rewarded_interstitial_ad.dart';
 // App open
 export 'src/app_open/app_open_ad.dart';
 
+// Picture-in-picture (open beta, GMA Next-Gen 1.4.0+)
+export 'src/pip/picture_in_picture_ad.dart';
+export 'src/pip/picture_in_picture_ad_listener.dart';
+export 'src/pip/picture_in_picture_ad_options.dart';
+
 // Native
 export 'src/native/native_ad.dart';
 export 'src/native/native_ad_listener.dart';
