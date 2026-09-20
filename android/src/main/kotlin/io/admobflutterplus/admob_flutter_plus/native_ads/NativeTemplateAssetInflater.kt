@@ -22,6 +22,8 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.IOException
 import java.io.InputStreamReader
+import java.io.Reader
+import java.io.StringReader
 import java.nio.charset.StandardCharsets
 
 /**
@@ -38,49 +40,75 @@ object NativeTemplateAssetInflater {
 
     private const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
 
-    fun inflate(context: Context, assetPath: String, packageName: String?): View {
+    fun inflate(
+        context: Context,
+        assetPath: String,
+        packageName: String?,
+        templateXml: String? = null,
+    ): View {
+        if (!templateXml.isNullOrBlank()) {
+            return parseXml(context, StringReader(templateXml), assetPath)
+        }
+
         val loader = FlutterInjector.instance().flutterLoader()
-        val key = if (packageName.isNullOrBlank()) {
+        val lookupKey = if (packageName.isNullOrBlank()) {
             loader.getLookupKeyForAsset(assetPath)
         } else {
             loader.getLookupKeyForAsset(assetPath, packageName)
         }
+        val candidates = linkedSetOf(
+            lookupKey,
+            assetPath,
+            "flutter_assets/$assetPath",
+        )
 
-        val stream = try {
-            context.assets.open(key)
-        } catch (e: IOException) {
+        var lastError: IOException? = null
+        for (key in candidates) {
+            try {
+                return context.assets.open(key).use { input ->
+                    parseXml(
+                        context,
+                        InputStreamReader(input, StandardCharsets.UTF_8),
+                        assetPath,
+                    )
+                }
+            } catch (e: IOException) {
+                lastError = e
+            }
+        }
+
+        throw NativeTemplateException(
+            "Native ad template not found: \"$assetPath\"" +
+                (if (packageName.isNullOrBlank()) "" else " (package: $packageName)") +
+                ". Declare it under flutter/assets in pubspec.yaml." +
+                (lastError?.message?.let { " ($it)" } ?: ""),
+        )
+    }
+
+    private fun parseXml(context: Context, reader: Reader, assetPath: String): View {
+        val factory = XmlPullParserFactory.newInstance()
+        factory.isNamespaceAware = true
+        val parser = factory.newPullParser()
+        parser.setInput(reader)
+
+        var event = parser.eventType
+        while (event != XmlPullParser.START_TAG && event != XmlPullParser.END_DOCUMENT) {
+            event = parser.next()
+        }
+        if (event != XmlPullParser.START_TAG) {
             throw NativeTemplateException(
-                "Native ad template not found: \"$assetPath\"" +
-                    (if (packageName.isNullOrBlank()) "" else " (package: $packageName)") +
-                    ". Declare it under flutter/assets in pubspec.yaml.",
+                "Invalid native ad template XML (no root element): \"$assetPath\"",
             )
         }
 
-        return stream.use { input ->
-            val factory = XmlPullParserFactory.newInstance()
-            factory.isNamespaceAware = true
-            val parser = factory.newPullParser()
-            parser.setInput(InputStreamReader(input, StandardCharsets.UTF_8))
-
-            var event = parser.eventType
-            while (event != XmlPullParser.START_TAG && event != XmlPullParser.END_DOCUMENT) {
-                event = parser.next()
-            }
-            if (event != XmlPullParser.START_TAG) {
-                throw NativeTemplateException(
-                    "Invalid native ad template XML (no root element): \"$assetPath\"",
-                )
-            }
-
-            try {
-                parseView(context, parser, parent = null)
-            } catch (e: NativeTemplateException) {
-                throw e
-            } catch (e: Exception) {
-                throw NativeTemplateException(
-                    "Failed to inflate native ad template \"$assetPath\": ${e.message}",
-                )
-            }
+        try {
+            return parseView(context, parser, parent = null)
+        } catch (e: NativeTemplateException) {
+            throw e
+        } catch (e: Exception) {
+            throw NativeTemplateException(
+                "Failed to inflate native ad template \"$assetPath\": ${e.message}",
+            )
         }
     }
 

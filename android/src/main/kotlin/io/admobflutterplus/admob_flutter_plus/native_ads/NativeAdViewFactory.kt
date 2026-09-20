@@ -36,6 +36,7 @@ class NativeCustomAdViewFactory(
         val templateAsset = params["templateAsset"] as? String
             ?: throw NativeTemplateException("templateAsset is required for custom native templates.")
         val templatePackage = params["templatePackage"] as? String
+        val templateXml = params["templateXml"] as? String
         val adId = params["adId"] as? String
         @Suppress("UNCHECKED_CAST")
         val style = params["style"] as? Map<String, Any?>
@@ -43,6 +44,7 @@ class NativeCustomAdViewFactory(
             context = context,
             templateAsset = templateAsset,
             templatePackage = templatePackage,
+            templateXml = templateXml,
             nativeAd = adId?.let { manager.getAd(it) },
             style = style,
         )

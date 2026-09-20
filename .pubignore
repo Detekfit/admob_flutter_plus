@@ -16,3 +16,4 @@ screenshots/README.md
 agent-transcripts/
 **/agent-tools/
 .cursor/
+graphify-out/

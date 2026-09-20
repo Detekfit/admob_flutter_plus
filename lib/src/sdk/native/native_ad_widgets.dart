@@ -208,7 +208,7 @@ class NativeCustomAdView extends StatefulWidget {
 
 class _NativeCustomAdViewState extends State<NativeCustomAdView> {
   Object? _error;
-  bool _assetReady = false;
+  String? _templateXml;
 
   @override
   void initState() {
@@ -228,15 +228,15 @@ class _NativeCustomAdViewState extends State<NativeCustomAdView> {
   Future<void> _validateAsset() async {
     setState(() {
       _error = null;
-      _assetReady = false;
+      _templateXml = null;
     });
     final key = widget.package == null
         ? widget.templateAsset
         : 'packages/${widget.package}/${widget.templateAsset}';
     try {
-      await rootBundle.load(key);
+      final xml = await rootBundle.loadString(key);
       if (!mounted) return;
-      setState(() => _assetReady = true);
+      setState(() => _templateXml = xml);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -256,7 +256,8 @@ class _NativeCustomAdViewState extends State<NativeCustomAdView> {
       // Surface loudly so missing templates are never silently ignored.
       Error.throwWithStackTrace(error, StackTrace.current);
     }
-    if (!_assetReady) {
+    final xml = _templateXml;
+    if (xml == null) {
       return SizedBox(height: widget.height, child: widget.placeholder);
     }
     return _NativeTemplateView(
@@ -267,6 +268,7 @@ class _NativeCustomAdViewState extends State<NativeCustomAdView> {
       placeholder: widget.placeholder,
       creationParams: <String, dynamic>{
         'templateAsset': widget.templateAsset,
+        'templateXml': xml,
         if (widget.package != null) 'templatePackage': widget.package,
       },
     );

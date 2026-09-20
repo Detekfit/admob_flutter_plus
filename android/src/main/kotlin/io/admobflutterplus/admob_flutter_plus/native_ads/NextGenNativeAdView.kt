@@ -56,11 +56,17 @@ class NextGenNativeAdView private constructor(
         templatePackage: String?,
         nativeAd: NativeAd?,
         style: Map<String, Any?>?,
+        templateXml: String? = null,
     ) : this(
         context = context,
         nativeAd = nativeAd,
         style = style,
-        rootView = NativeTemplateAssetInflater.inflate(context, templateAsset, templatePackage),
+        rootView = NativeTemplateAssetInflater.inflate(
+            context,
+            templateAsset,
+            templatePackage,
+            templateXml,
+        ),
     )
 
     init {
