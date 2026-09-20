@@ -35,6 +35,7 @@ class BannerAdView extends StatefulWidget {
     this.listener,
     this.controller,
     this.placeholder,
+    this.usePreload = false,
   });
 
   /// The AdMob ad unit ID.
@@ -58,6 +59,11 @@ class BannerAdView extends StatefulWidget {
 
   /// Widget shown when the ad fails to load, or on unsupported platforms.
   final Widget? placeholder;
+
+  /// When `true`, the PlatformView polls `BannerAdPreloader` for [adUnitId]
+  /// and attaches a ready ad; if the buffer is empty it falls back to a normal
+  /// load. Prefer the same [size] used in `BannerAdPreloader.start`.
+  final bool usePreload;
 
   @override
   State<BannerAdView> createState() => _BannerAdViewState();
@@ -87,6 +93,7 @@ class _BannerAdViewState extends State<BannerAdView> {
         'adUnitId': widget.adUnitId,
         'size': widget.size.toMap(),
         'request': widget.request.toMap(),
+        'preload': widget.usePreload,
       };
 
   void _onPlatformViewCreated(int id) {

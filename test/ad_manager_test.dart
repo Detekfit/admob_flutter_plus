@@ -47,6 +47,19 @@ void main() {
       expect(widget, isA<SizedBox>());
       expect((widget as SizedBox).key, const Key('empty'));
     });
+
+    test('returns AdBanner with usePreload when banner id is configured', () {
+      AdManager.debugSetPreAdUnitIds(
+        const PreAdUnitIds(banner: 'ca-app-pub-test/banner'),
+      );
+      AdManager.debugSetPreloadBannerSize(const AdSize.anchored());
+      final widget = AdManager.showPreLoadedBanner(height: 100);
+      expect(widget, isA<AdBanner>());
+      final banner = widget as AdBanner;
+      expect(banner.adUnitId, 'ca-app-pub-test/banner');
+      expect(banner.usePreload, isTrue);
+      expect(banner.size, const AdSize.anchored());
+    });
   });
 
   group('AdBanner gating', () {
@@ -76,9 +89,43 @@ void main() {
   });
 
   group('NativeTemplate', () {
-    test('exposes banner small large', () {
-      expect(NativeTemplate.values.length, 3);
+    test('built-ins expose name', () {
+      expect(NativeTemplate.banner.name, 'banner');
       expect(NativeTemplate.small.name, 'small');
+      expect(NativeTemplate.large.name, 'large');
+      expect(NativeTemplate.small.isAsset, isFalse);
+      expect(NativeTemplate.small.assetPath, isNull);
+    });
+
+    test('asset(path) stores path and equality', () {
+      const a = NativeTemplate.asset('assets/native/a.xml');
+      const b = NativeTemplate.asset('assets/native/a.xml');
+      const c = NativeTemplate.asset('assets/native/b.xml');
+      expect(a.isAsset, isTrue);
+      expect(a.assetPath, 'assets/native/a.xml');
+      expect(a.name, 'asset');
+      expect(a, b);
+      expect(a, isNot(c));
+      expect(a, isNot(NativeTemplate.small));
+    });
+  });
+
+  group('AdSize.toMap for preload payload', () {
+    test('anchored serializes type and width', () {
+      const size = AdSize.anchored();
+      expect(size.toMap(), <String, dynamic>{
+        'type': 'anchored',
+        'width': -1,
+      });
+    });
+
+    test('fixed banner serializes dimensions', () {
+      const size = AdSize.banner();
+      expect(size.toMap(), <String, dynamic>{
+        'type': 'fixed',
+        'width': 320,
+        'height': 50,
+      });
     });
   });
 }

@@ -81,6 +81,8 @@ Future<void> main() async {
     adsEnabled: true,
     testDeviceIds: ['YOUR_TEST_DEVICE_ID'],
     preloadInterstitial: true,
+    preloadBanner: true,
+    preloadBannerSize: const AdSize.anchored(),
     showAppOpenOnResume: true, // resume only — never on first launch
     preAdUnitIds: const PreAdUnitIds(
       interstitial: 'ca-app-pub-xxx/interstitial',
@@ -103,8 +105,12 @@ Show ads:
 ```dart
 // Widgets
 AdManager.banner(adUnitId: bannerId, size: const AdSize.anchored(), height: 100);
-AdManager.showPreLoadedBanner(size: const AdSize.anchored(), height: 100);
+AdManager.showPreLoadedBanner(height: 100); // uses preloadBannerSize from initialize
 AdManager.native(adUnitId: nativeId, template: NativeTemplate.small);
+AdManager.native(
+  adUnitId: nativeId,
+  template: NativeTemplate.asset('assets/native/my_template.xml'),
+);
 
 // Load-and-show (poll preloader for that id if ready, else load then show)
 AdManager.interstitial(adUnitId: interstitialId, onClosed: () {});
@@ -114,6 +120,9 @@ AdManager.rewardInterstitial(adUnitId: riId, onReward: (r) {});
 // Prefer preloaded buffer; if empty, one load-then-show (no retry loop)
 AdManager.showPreLoadedInterstitial(onClosed: () {}, onUnavailable: () {});
 AdManager.showPreLoadedReward(onReward: (r) {}, onUnavailable: () {});
+
+// First-open / custom app-open: always load-then-show (independent of resume)
+AdManager.showAppOpen(adUnitId: appOpenId);
 
 // PiP pop ad
 AdManager.showPopAd(adUnitId: pipId, onUnavailable: () {});
@@ -274,13 +283,32 @@ await InterstitialAdPreloader.destroy(adUnitId: id);
 // Also: isAvailable(), count()
 ```
 
-> **Preloading support.** The Next-Gen SDK ships preloader classes for every
-> format (`AppOpenAdPreloader`, `BannerAdPreloader`, `InterstitialAdPreloader`,
-> `NativeAdPreloader`, `RewardedAdPreloader`, `RewardedInterstitialAdPreloader`),
-> but Google's guides document preloading for **interstitial**, **rewarded**, and
-> **rewarded interstitial** ads. This plugin exposes those three via
-> `InterstitialAdPreloader`, `RewardedAdPreloader`, and
-> `RewardedInterstitialAdPreloader`. `bufferSize` must be 1–15 (SDK default 2).
+Banner preload requires an `AdSize` (requests are size-specific). Display with
+`BannerAdView(usePreload: true)` — the PlatformView polls natively; if the
+buffer is empty it falls back to a normal load:
+
+```dart
+await BannerAdPreloader.start(
+  adUnitId: bannerId,
+  size: const AdSize.anchored(),
+  bufferSize: 2,
+);
+BannerAdView(
+  adUnitId: bannerId,
+  size: const AdSize.anchored(),
+  height: 100,
+  usePreload: true,
+);
+await BannerAdPreloader.destroy(adUnitId: bannerId);
+// Also: isAvailable(), count()
+```
+
+> **Preloading support.** This plugin exposes `InterstitialAdPreloader`,
+> `RewardedAdPreloader`, `RewardedInterstitialAdPreloader`, and
+> `BannerAdPreloader` (`start` requires `AdSize`). `bufferSize` must be 1–15
+> (SDK default 2). App open has no preloader class here — use
+> `AdManager.showAppOpen` for on-demand load-then-show, or
+> `showAppOpenOnResume` to cache one ad for resume only.
 
 ## Rewarded ads
 
@@ -322,6 +350,13 @@ AppStateEventNotifier.appStateStream.listen((state) async {
 ```
 
 App open ads expire four hours after loading; `isAvailable()` enforces this.
+
+With **AdManager**:
+- `AdManager.showAppOpen(adUnitId: …)` always **loads then shows** (splash /
+  first-open). It does **not** require `showAppOpenOnResume`, and it does **not**
+  consume the resume cache.
+- `showAppOpenOnResume: true` only loads `preAdUnitIds.appOpen` ahead of time
+  and shows it after background → foreground.
 
 ## Picture-in-picture ads (open beta) ![NEW](https://img.shields.io/badge/NEW-brightgreen)
 
@@ -418,6 +453,15 @@ NativeCustomAdView(
   templateAsset: 'assets/native/my_template.xml',
   height: 360,
 )
+```
+
+Or via AdManager with a single required `template`:
+
+```dart
+AdManager.native(
+  adUnitId: nativeId,
+  template: NativeTemplate.asset('assets/native/my_template.xml'),
+);
 ```
 
 Asset XML must bind widgets with `android:tag` (not `@+id`). Required tags:

@@ -1,25 +1,31 @@
 package io.admobflutterplus.admob_flutter_plus.preload
 
+import android.content.Context
+import com.google.android.libraries.ads.mobile.sdk.banner.BannerAdPreloader
+import com.google.android.libraries.ads.mobile.sdk.banner.BannerAdRequest
 import com.google.android.libraries.ads.mobile.sdk.common.AdRequest
 import com.google.android.libraries.ads.mobile.sdk.common.PreloadConfiguration
 import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdPreloader
 import com.google.android.libraries.ads.mobile.sdk.rewarded.RewardedAdPreloader
 import com.google.android.libraries.ads.mobile.sdk.rewardedinterstitial.RewardedInterstitialAdPreloader
+import io.admobflutterplus.admob_flutter_plus.banner.BannerAdSizeResolver
 import io.admobflutterplus.admob_flutter_plus.core.applyRequest
+import io.admobflutterplus.admob_flutter_plus.core.extrasBundle
 import io.admobflutterplus.admob_flutter_plus.interstitial.InterstitialAdManager
 import io.admobflutterplus.admob_flutter_plus.rewarded.RewardedAdManager
 import io.admobflutterplus.admob_flutter_plus.rewarded.rewarded_interstitial.RewardedInterstitialAdManager
 
 /**
- * Bridges the SDK preloaders. Per the official Next-Gen docs, the preloading
- * API supports interstitial, rewarded, and rewarded interstitial ads. App open
- * ads are not preloaded through a preloader class; load them ahead of time
- * instead.
+ * Bridges the SDK preloaders for interstitial, rewarded, rewarded interstitial,
+ * and banner. App open ads are not preloaded through a preloader class; load
+ * them ahead of time instead.
  *
- * Polled ads are adopted into the corresponding manager so the standard
- * show/dispose lifecycle applies.
+ * Polled full-screen ads are adopted into the corresponding manager so the
+ * standard show/dispose lifecycle applies. Banner ads are polled by the
+ * PlatformView via [BannerAdPreloader.pollAd] directly.
  */
 class PreloaderManager(
+    private val contextProvider: () -> Context,
     private val interstitialManager: InterstitialAdManager,
     private val rewardedManager: RewardedAdManager,
     private val rewardedInterstitialManager: RewardedInterstitialAdManager,
@@ -104,5 +110,35 @@ class PreloaderManager(
 
     fun destroyRewardedInterstitial(adUnitId: String) {
         RewardedInterstitialAdPreloader.destroy(adUnitId)
+    }
+
+    // --- Banner ---
+
+    fun startBanner(
+        adUnitId: String,
+        bufferSize: Int,
+        size: Map<String, Any?>?,
+        request: Map<String, Any?>?,
+    ) {
+        if (size == null) return
+        val context = contextProvider()
+        val adSize = BannerAdSizeResolver.resolve(context, size)
+        val requestBuilder = BannerAdRequest.Builder(adUnitId, adSize)
+            .apply { applyRequest(request) }
+        extrasBundle(request)?.let { requestBuilder.setGoogleExtrasBundle(it) }
+        BannerAdPreloader.start(
+            adUnitId,
+            PreloadConfiguration(requestBuilder.build(), bufferSize),
+        )
+    }
+
+    fun isBannerAvailable(adUnitId: String): Boolean =
+        BannerAdPreloader.isAdAvailable(adUnitId)
+
+    fun bannerCount(adUnitId: String): Int =
+        BannerAdPreloader.getNumAdsAvailable(adUnitId)
+
+    fun destroyBanner(adUnitId: String) {
+        BannerAdPreloader.destroy(adUnitId)
     }
 }

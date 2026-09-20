@@ -65,9 +65,10 @@ class AdmobFlutterPlusPlugin :
         pictureInPictureManager = PictureInPictureAdManager(dispatcher)
         nativeManager = NativeAdManager(dispatcher)
         preloaderManager = PreloaderManager(
-            interstitialManager,
-            rewardedManager,
-            rewardedInterstitialManager,
+            contextProvider = { activity ?: applicationContext },
+            interstitialManager = interstitialManager,
+            rewardedManager = rewardedManager,
+            rewardedInterstitialManager = rewardedInterstitialManager,
         )
         appStateNotifier = AppStateNotifier(binding.binaryMessenger)
         consentManager = ConsentManager(binding.binaryMessenger, applicationContext)
@@ -251,6 +252,22 @@ class AdmobFlutterPlusPlugin :
                 result.success(preloaderManager.rewardedInterstitialCount(adUnitId()))
             "destroyRewardedInterstitialPreload" -> {
                 preloaderManager.destroyRewardedInterstitial(adUnitId())
+                result.success(null)
+            }
+
+            // Banner preload
+            "startBannerPreload" -> {
+                @Suppress("UNCHECKED_CAST")
+                val size = args?.get("size") as? Map<String, Any?>
+                preloaderManager.startBanner(adUnitId(), bufferSize(args), size, request())
+                result.success(null)
+            }
+            "isBannerPreloadAvailable" ->
+                result.success(preloaderManager.isBannerAvailable(adUnitId()))
+            "bannerPreloadCount" ->
+                result.success(preloaderManager.bannerCount(adUnitId()))
+            "destroyBannerPreload" -> {
+                preloaderManager.destroyBanner(adUnitId())
                 result.success(null)
             }
 

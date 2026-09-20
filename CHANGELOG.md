@@ -13,15 +13,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `initialize` — UMP consent (show if required), Mobile Ads init, optional
     preloaders via `preAdUnitIds`, optional resume app-open (never on cold
     start), `adsEnabled` kill-switch, test devices. Never throws.
-  - Widgets: `banner` / `showPreLoadedBanner` / `native` (`NativeTemplate` or
-    custom asset XML).
+  - Widgets: `banner` / `showPreLoadedBanner` / `native` (required
+    `NativeTemplate`: `.banner` / `.small` / `.large` or
+    `NativeTemplate.asset(path)`).
   - Load-and-show: `interstitial` / `reward` / `rewardInterstitial` (poll then
     load if needed).
   - Ready-prefer: `showPreLoadedInterstitial` / `showPreLoadedReward` /
     `showPreLoadedRewardInterstitial` (poll buffer; if empty, **one**
     load-then-show — no retry loop).
   - First-open `showAppOpen(adUnitId:)` and PiP `showPopAd` / `hidePopAd`.
+- `BannerAdPreloader` (`start` requires `AdSize`; `isAvailable` / `count` /
+  `destroy`). `BannerAdView.usePreload` polls the buffer natively and falls
+  back to `loadAd` when empty. `AdManager` `preloadBanner` +
+  `preloadBannerSize` start that buffer; `showPreLoadedBanner` attaches with
+  `usePreload: true`.
 - Dart sources reorganized under `lib/src/sdk/` (public API names unchanged).
+
+### Changed
+
+- `AdManager.native` takes a required `template` only; `templateAsset` was
+  removed in favor of `NativeTemplate.asset(path)`.
+
+### Clarified
+
+- `showAppOpen(adUnitId:)` is always on-demand load-then-show, even when
+  `showAppOpenOnResume` is false. Resume cache is separate and is not consumed
+  by `showAppOpen`.
 
 ## 0.1.4
 

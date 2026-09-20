@@ -54,6 +54,7 @@ export 'src/sdk/native/native_ad_widgets.dart';
 export 'src/sdk/native/native_template_exception.dart';
 
 // Preload
+export 'src/sdk/preload/banner_ad_preloader.dart';
 export 'src/sdk/preload/interstitial_ad_preloader.dart';
 export 'src/sdk/preload/rewarded_ad_preloader.dart';
 export 'src/sdk/preload/rewarded_interstitial_ad_preloader.dart';

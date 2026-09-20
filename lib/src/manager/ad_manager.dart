@@ -21,6 +21,7 @@ import '../sdk/native/native_ad_view_style.dart';
 import '../sdk/pip/picture_in_picture_ad.dart';
 import '../sdk/pip/picture_in_picture_ad_listener.dart';
 import '../sdk/pip/picture_in_picture_ad_options.dart';
+import '../sdk/preload/banner_ad_preloader.dart';
 import '../sdk/preload/interstitial_ad_preloader.dart';
 import '../sdk/preload/rewarded_ad_preloader.dart';
 import '../sdk/preload/rewarded_interstitial_ad_preloader.dart';
@@ -77,6 +78,7 @@ class AdManager {
   static bool _preloadRewarded = false;
   static bool _preloadRewardedInterstitial = false;
   static bool _preloadBanner = false;
+  static AdSize _preloadBannerSize = const AdSize.anchored();
   static bool _showAppOpenOnResume = false;
   static int _bufferSize = 2;
 
@@ -110,6 +112,7 @@ class AdManager {
     bool preloadRewarded = false,
     bool preloadRewardedInterstitial = false,
     bool preloadBanner = false,
+    AdSize preloadBannerSize = const AdSize.anchored(),
     bool showAppOpenOnResume = false,
     PreAdUnitIds preAdUnitIds = const PreAdUnitIds(),
     int bufferSize = 2,
@@ -124,6 +127,7 @@ class AdManager {
     _preloadRewarded = preloadRewarded;
     _preloadRewardedInterstitial = preloadRewardedInterstitial;
     _preloadBanner = preloadBanner;
+    _preloadBannerSize = preloadBannerSize;
     _showAppOpenOnResume = showAppOpenOnResume;
     _bufferSize = bufferSize.clamp(1, 15);
 
@@ -230,9 +234,13 @@ class AdManager {
   }
 
   /// Banner using [PreAdUnitIds.banner] from [initialize]. No [adUnitId] arg.
+  ///
+  /// Polls the banner preload buffer started when `preloadBanner: true`.
+  /// Prefer the same [size] as `preloadBannerSize` on [initialize]; when
+  /// omitted, the stored preload size is used.
   static Widget showPreLoadedBanner({
     Key? key,
-    required AdSize size,
+    AdSize? size,
     double? height,
     AdRequest request = const AdRequest(),
     BannerAdListener? listener,
@@ -250,21 +258,21 @@ class AdManager {
     return AdBanner(
       key: key,
       adUnitId: id,
-      size: size,
+      size: size ?? _preloadBannerSize,
       height: height,
       request: request,
       listener: listener,
       controller: controller,
       placeholder: placeholder,
+      usePreload: true,
     );
   }
 
-  /// On-demand native ad. [adUnitId] is required.
+  /// On-demand native ad. [adUnitId] and [template] are required.
   static Widget native({
     Key? key,
     required String adUnitId,
-    NativeTemplate template = NativeTemplate.small,
-    String? templateAsset,
+    required NativeTemplate template,
     double? height,
     AdRequest request = const AdRequest(),
     NativeAdOptions options = const NativeAdOptions(),
@@ -276,7 +284,6 @@ class AdManager {
       key: key,
       adUnitId: adUnitId,
       template: template,
-      templateAsset: templateAsset,
       height: height,
       request: request,
       options: options,
@@ -689,8 +696,19 @@ class AdManager {
         _reportDebug('Rewarded interstitial preloader failed: $error', stack);
       }
     }
-    // preloadBanner only stores the id for showPreLoadedBanner — no native
-    // BannerAdPreloader in this plugin.
+
+    final banner = _preAdUnitIds.banner;
+    if (_preloadBanner && banner != null && banner.isNotEmpty) {
+      try {
+        await BannerAdPreloader.start(
+          adUnitId: banner,
+          size: _preloadBannerSize,
+          bufferSize: _bufferSize,
+        );
+      } catch (error, stack) {
+        _reportDebug('Banner preloader failed: $error', stack);
+      }
+    }
   }
 
   static Future<void> _stopPreloaders() async {
@@ -712,6 +730,12 @@ class AdManager {
         await RewardedInterstitialAdPreloader.destroy(
           adUnitId: rewardedInterstitial,
         );
+      } catch (_) {}
+    }
+    final banner = _preAdUnitIds.banner;
+    if (banner != null && banner.isNotEmpty) {
+      try {
+        await BannerAdPreloader.destroy(adUnitId: banner);
       } catch (_) {}
     }
   }
@@ -951,6 +975,7 @@ class AdManager {
     _preloadRewarded = false;
     _preloadRewardedInterstitial = false;
     _preloadBanner = false;
+    _preloadBannerSize = const AdSize.anchored();
     _showAppOpenOnResume = false;
     _bufferSize = 2;
     _fullscreenBusy = false;
@@ -958,6 +983,18 @@ class AdManager {
     _appStateSub = null;
     _resumeAppOpen = null;
     _popAd = null;
+  }
+
+  /// Test-only: seed [preAdUnitIds] without calling [initialize].
+  @visibleForTesting
+  static void debugSetPreAdUnitIds(PreAdUnitIds ids) {
+    _preAdUnitIds = ids;
+  }
+
+  /// Test-only: seed `preloadBannerSize` without calling [initialize].
+  @visibleForTesting
+  static void debugSetPreloadBannerSize(AdSize size) {
+    _preloadBannerSize = size;
   }
 
   /// Test-only: whether the resume latch has seen a background event.

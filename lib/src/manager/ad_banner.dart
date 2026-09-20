@@ -21,6 +21,7 @@ class AdBanner extends StatelessWidget {
     this.listener,
     this.controller,
     this.placeholder,
+    this.usePreload = false,
   });
 
   /// AdMob ad unit ID.
@@ -44,6 +45,9 @@ class AdBanner extends StatelessWidget {
   /// Shown when ads are disabled or the platform is unsupported.
   final Widget? placeholder;
 
+  /// When `true`, polls the banner preload buffer (see [BannerAdView.usePreload]).
+  final bool usePreload;
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
@@ -60,6 +64,7 @@ class AdBanner extends StatelessWidget {
           listener: listener,
           controller: controller,
           placeholder: placeholder,
+          usePreload: usePreload,
         );
       },
     );

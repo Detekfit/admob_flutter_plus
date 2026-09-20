@@ -12,13 +12,13 @@ class NativeSection extends StatefulWidget {
   State<NativeSection> createState() => NativeSectionState();
 }
 
-enum NativeTemplate { banner, small, large, custom }
+enum DemoNativeLayout { banner, small, large, custom }
 
 class NativeSectionState extends State<NativeSection> {
   NativeAd? ad;
   bool loading = false;
   String status = 'Idle';
-  NativeTemplate template = NativeTemplate.large;
+  DemoNativeLayout template = DemoNativeLayout.large;
 
   static const NativeAdViewStyle style = NativeAdViewStyle(
     ctaColor: Colors.indigo,
@@ -87,12 +87,12 @@ class NativeSectionState extends State<NativeSection> {
         const SizedBox(height: 8),
         FilledButton.icon(onPressed: loading ? null : load, icon: const Icon(Icons.download), label: const Text('Load native ad')),
         const SizedBox(height: 8),
-        SegmentedButton<NativeTemplate>(
+        SegmentedButton<DemoNativeLayout>(
           segments: const [
-            ButtonSegment(value: NativeTemplate.banner, label: Text('Banner')),
-            ButtonSegment(value: NativeTemplate.small, label: Text('Small')),
-            ButtonSegment(value: NativeTemplate.large, label: Text('Large')),
-            ButtonSegment(value: NativeTemplate.custom, label: Text('Custom')),
+            ButtonSegment(value: DemoNativeLayout.banner, label: Text('Banner')),
+            ButtonSegment(value: DemoNativeLayout.small, label: Text('Small')),
+            ButtonSegment(value: DemoNativeLayout.large, label: Text('Large')),
+            ButtonSegment(value: DemoNativeLayout.custom, label: Text('Custom')),
           ],
           selected: {template},
           onSelectionChanged: (selected) => setState(() => template = selected.first),
@@ -105,13 +105,13 @@ class NativeSectionState extends State<NativeSection> {
 
   Widget buildTemplate(NativeAd nativeAd) {
     switch (template) {
-      case NativeTemplate.banner:
+      case DemoNativeLayout.banner:
         return NativeBannerAdView(ad: nativeAd, style: style);
-      case NativeTemplate.small:
+      case DemoNativeLayout.small:
         return NativeSmallAdView(ad: nativeAd, style: style);
-      case NativeTemplate.large:
+      case DemoNativeLayout.large:
         return NativeLargeAdView(ad: nativeAd, style: style);
-      case NativeTemplate.custom:
+      case DemoNativeLayout.custom:
         return NativeCustomAdView(
           ad: nativeAd,
           templateAsset: 'assets/native/native_ad.xml',
