@@ -1,19 +1,20 @@
 # admob_flutter_plus
 
-[![pub version](https://img.shields.io/badge/pub-0.1.4-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
+[![pub version](https://img.shields.io/badge/pub-0.2.0-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![New](https://img.shields.io/badge/NEW-Picture--in--Picture%20ads-brightgreen)](#picture-in-picture-ads-open-beta-new)
+[![New](https://img.shields.io/badge/NEW-AdManager%20helper-brightgreen)](#quick-start-with-admanager)
 
 ![Admob Flutter Plus Screenshot](https://raw.githubusercontent.com/Detekfit/admob_flutter_plus/main/screenshots/admob_flutter_plus.webp)
 
 A community-maintained Flutter plugin for the **Google Mobile Ads Next-Gen SDK**
 on Android — banners, interstitials, rewarded ads, native templates (built-in
 or custom XML from Flutter assets), preloaders, UMP consent, and app open ads,
-wrapped in an idiomatic, Future-first Dart API.
+wrapped in an idiomatic, Future-first Dart API. Includes an optional
+[AdManager](#quick-start-with-admanager) helper for one-call setup.
 
-> **New in 0.1.4:** [Picture-in-picture ads](#picture-in-picture-ads-open-beta-new)
-> (GMA Next-Gen open beta) — a floating, draggable ad that stays on screen while
-> users keep scrolling, reading, or playing.
+> **New in 0.2.0:** [AdManager](#quick-start-with-admanager) — initialize,
+> preload, banners, rewarded, app open on resume, and PiP from a single helper.
+> The low-level SDK API is unchanged.
 
 > **Unofficial package.** `admob_flutter_plus` is **not** published, endorsed,
 > or maintained by Google. It wraps the official
@@ -41,7 +42,7 @@ no-ops where sensible.
 
 ```yaml
 dependencies:
-  admob_flutter_plus: ^0.1.4
+  admob_flutter_plus: ^0.2.0
 ```
 
 ### AndroidManifest setup
@@ -66,7 +67,66 @@ Optional — hard-disable Ad Inspector for a build (GMA Next-Gen 1.3.0+):
 Banner video ads require hardware acceleration on the hosting Activity. This is
 the default on modern Android; do not disable it.
 
-## Getting started
+## Quick start with AdManager
+
+Prefer the low-level SDK API below when you need full control. For most apps,
+`AdManager` handles consent, initialization, preload, and common show flows.
+
+`initialize` never throws — always reach `runApp()`:
+
+```dart
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AdManager.initialize(
+    adsEnabled: true,
+    testDeviceIds: ['YOUR_TEST_DEVICE_ID'],
+    preloadInterstitial: true,
+    showAppOpenOnResume: true, // resume only — never on first launch
+    preAdUnitIds: const PreAdUnitIds(
+      interstitial: 'ca-app-pub-xxx/interstitial',
+      appOpen: 'ca-app-pub-xxx/app-open',
+      banner: 'ca-app-pub-xxx/banner',
+    ),
+  );
+  runApp(const MyApp());
+}
+```
+
+After splash (first open only; does not enable resume):
+
+```dart
+await AdManager.showAppOpen(adUnitId: 'ca-app-pub-xxx/app-open');
+```
+
+Show ads:
+
+```dart
+// Widgets
+AdManager.banner(adUnitId: bannerId, size: const AdSize.anchored(), height: 100);
+AdManager.showPreLoadedBanner(size: const AdSize.anchored(), height: 100);
+AdManager.native(adUnitId: nativeId, template: NativeTemplate.small);
+
+// Load-and-show (poll preloader for that id if ready, else load then show)
+AdManager.interstitial(adUnitId: interstitialId, onClosed: () {});
+AdManager.reward(adUnitId: rewardedId, onReward: (r) {}, onUnavailable: () {});
+AdManager.rewardInterstitial(adUnitId: riId, onReward: (r) {});
+
+// Prefer preloaded buffer; if empty, one load-then-show (no retry loop)
+AdManager.showPreLoadedInterstitial(onClosed: () {}, onUnavailable: () {});
+AdManager.showPreLoadedReward(onReward: (r) {}, onUnavailable: () {});
+
+// PiP pop ad
+AdManager.showPopAd(adUnitId: pipId, onUnavailable: () {});
+AdManager.hidePopAd();
+```
+
+Disable all AdManager requests after a subscription:
+
+```dart
+await AdManager.setAdsEnabled(false);
+```
+
+## Getting started (custom SDK API)
 
 ### Consent + initialization (important)
 

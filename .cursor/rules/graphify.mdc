@@ -1,0 +1,52 @@
+---
+description: Always use graphify for codebase context, architecture, and file/folder discovery before grepping or reading broadly
+alwaysApply: true
+---
+
+# Graphify-first context
+
+This repo has a knowledge graph at `graphify-out/`. Prefer it over blind file walks for understanding the project.
+
+## Purpose
+
+Use graphify to:
+
+- Answer "how does X work?", "what calls Y?", "where is Z?", architecture, data flow
+- Find related files/folders before opening many paths
+- Trace connections across Dart ↔ Kotlin and docs ↔ code
+- Orient before a change: which community/god nodes own the area
+
+Do **not** use graphify as a substitute for reading the exact files you will edit — query first to locate them, then open those files.
+
+## When the graph exists (`graphify-out/graph.json`)
+
+For codebase questions or locating context, run **before** broad Grep/Glob/Read sweeps:
+
+```powershell
+graphify query "<question>"
+# narrow path:  graphify query "<question>" --dfs
+# two symbols:  graphify path "SourceSymbol" "TargetSymbol"
+# one node:     graphify explain "NodeLabelOrId"
+```
+
+Cite `source_location` / `source_file` from the result when pointing at code.
+
+If `.graphify_python` is missing, re-resolve the interpreter per the graphify skill, then retry the query.
+
+## When the graph is missing or stale
+
+- **Missing** `graphify-out/graph.json` → run `/graphify` (full pipeline) once before architecture answers.
+- **Code changed a lot** since last build → `/graphify --update` (or full `/graphify` if update fails).
+- **Docs/images changed** → `/graphify --update` (commit hook only covers code AST).
+
+## Fallbacks (after graphify, or if it cannot answer)
+
+- Exact string / symbol name you already know → Grep is fine.
+- Single known file to edit → Read that file.
+- Graph returns nothing useful → say so briefly, then Grep/Glob as usual.
+
+## Do not
+
+- Rebuild the full graph on every message when `graph.json` already exists and the question is navigational.
+- Invent edges or relationships not returned by graphify.
+- Skip graphify for "explore the codebase" / "how is this structured" style requests.

@@ -13,6 +13,21 @@ import 'sections/rewarded_section.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Prefer AdManager for a one-call setup (consent + SDK + optional preload):
+  //
+  //   await AdManager.initialize(
+  //     adsEnabled: true,
+  //     preloadInterstitial: true,
+  //     showAppOpenOnResume: true,
+  //     preAdUnitIds: PreAdUnitIds(
+  //       interstitial: AdDemoIds.interstitial,
+  //       appOpen: AdDemoIds.appOpen,
+  //       banner: AdDemoIds.banner,
+  //     ),
+  //   );
+  //
+  // This demo keeps the low-level SDK path so each format can be exercised.
+
   // Consent must never block the app from starting. If the device is offline
   // or the consent request fails, we still call runApp().
   try {

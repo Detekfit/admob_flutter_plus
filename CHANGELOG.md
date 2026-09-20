@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0
+
+### Added
+
+- `AdManager` convenience helper (`lib/src/manager/`):
+  - `initialize` — UMP consent (show if required), Mobile Ads init, optional
+    preloaders via `preAdUnitIds`, optional resume app-open (never on cold
+    start), `adsEnabled` kill-switch, test devices. Never throws.
+  - Widgets: `banner` / `showPreLoadedBanner` / `native` (`NativeTemplate` or
+    custom asset XML).
+  - Load-and-show: `interstitial` / `reward` / `rewardInterstitial` (poll then
+    load if needed).
+  - Ready-prefer: `showPreLoadedInterstitial` / `showPreLoadedReward` /
+    `showPreLoadedRewardInterstitial` (poll buffer; if empty, **one**
+    load-then-show — no retry loop).
+  - First-open `showAppOpen(adUnitId:)` and PiP `showPopAd` / `hidePopAd`.
+- Dart sources reorganized under `lib/src/sdk/` (public API names unchanged).
+
 ## 0.1.4
 
 ### Added

@@ -7,49 +7,60 @@
 /// idiomatic, Future-first Dart API.
 library;
 
+// ---------------------------------------------------------------------------
+// SDK (low-level AdMob API)
+// ---------------------------------------------------------------------------
+
 // Core
-export 'src/core/ad_error.dart';
-export 'src/core/ad_request.dart';
-export 'src/core/app_state_event_notifier.dart';
-export 'src/core/full_screen_ad.dart' show FullScreenAdListener;
-export 'src/core/initialization_status.dart';
-export 'src/core/mobile_ads.dart';
-export 'src/core/request_configuration.dart';
+export 'src/sdk/core/ad_error.dart';
+export 'src/sdk/core/ad_request.dart';
+export 'src/sdk/core/app_state_event_notifier.dart';
+export 'src/sdk/core/full_screen_ad.dart' show FullScreenAdListener;
+export 'src/sdk/core/initialization_status.dart';
+export 'src/sdk/core/mobile_ads.dart';
+export 'src/sdk/core/request_configuration.dart';
 
 // Consent
-export 'src/consent/consent.dart';
+export 'src/sdk/consent/consent.dart';
 
 // Banner
-export 'src/banner/ad_size.dart';
-export 'src/banner/banner_ad_controller.dart';
-export 'src/banner/banner_ad_listener.dart';
-export 'src/banner/banner_ad_view.dart';
+export 'src/sdk/banner/ad_size.dart';
+export 'src/sdk/banner/banner_ad_controller.dart';
+export 'src/sdk/banner/banner_ad_listener.dart';
+export 'src/sdk/banner/banner_ad_view.dart';
 
 // Interstitial
-export 'src/interstitial/interstitial_ad.dart';
+export 'src/sdk/interstitial/interstitial_ad.dart';
 
 // Rewarded
-export 'src/rewarded/reward_item.dart';
-export 'src/rewarded/rewarded_ad.dart';
-export 'src/rewarded/rewarded_interstitial/rewarded_interstitial_ad.dart';
+export 'src/sdk/rewarded/reward_item.dart';
+export 'src/sdk/rewarded/rewarded_ad.dart';
+export 'src/sdk/rewarded/rewarded_interstitial/rewarded_interstitial_ad.dart';
 
 // App open
-export 'src/app_open/app_open_ad.dart';
+export 'src/sdk/app_open/app_open_ad.dart';
 
 // Picture-in-picture (open beta, GMA Next-Gen 1.4.0+)
-export 'src/pip/picture_in_picture_ad.dart';
-export 'src/pip/picture_in_picture_ad_listener.dart';
-export 'src/pip/picture_in_picture_ad_options.dart';
+export 'src/sdk/pip/picture_in_picture_ad.dart';
+export 'src/sdk/pip/picture_in_picture_ad_listener.dart';
+export 'src/sdk/pip/picture_in_picture_ad_options.dart';
 
 // Native
-export 'src/native/native_ad.dart';
-export 'src/native/native_ad_listener.dart';
-export 'src/native/native_ad_options.dart';
-export 'src/native/native_ad_view_style.dart';
-export 'src/native/native_ad_widgets.dart';
-export 'src/native/native_template_exception.dart';
+export 'src/sdk/native/native_ad.dart';
+export 'src/sdk/native/native_ad_listener.dart';
+export 'src/sdk/native/native_ad_options.dart';
+export 'src/sdk/native/native_ad_view_style.dart';
+export 'src/sdk/native/native_ad_widgets.dart';
+export 'src/sdk/native/native_template_exception.dart';
 
 // Preload
-export 'src/preload/interstitial_ad_preloader.dart';
-export 'src/preload/rewarded_ad_preloader.dart';
-export 'src/preload/rewarded_interstitial_ad_preloader.dart';
+export 'src/sdk/preload/interstitial_ad_preloader.dart';
+export 'src/sdk/preload/rewarded_ad_preloader.dart';
+export 'src/sdk/preload/rewarded_interstitial_ad_preloader.dart';
+
+// ---------------------------------------------------------------------------
+// Manager (convenience helper)
+// ---------------------------------------------------------------------------
+export 'src/manager/ad_manager.dart';
+export 'src/manager/ad_banner.dart';
+export 'src/manager/ad_native.dart';
