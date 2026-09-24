@@ -31,7 +31,8 @@ private const val TAG = "AdmobFlutterPlusBanner"
  * PlatformView hosting a Next-Gen [AdView].
  *
  * When `creationParams["preload"]` is true, polls [BannerAdPreloader] and
- * attaches via [AdView.registerBannerAd]; otherwise loads via
+ * attaches via [AdView.registerBannerAd]. An empty buffer or a failed
+ * register does not call `loadAd`. Otherwise loads via
  * `AdView.loadAd(BannerAdRequest, AdLoadCallback)`. Supports in-place refresh
  * over a per-view method channel without recreating the PlatformView.
  *
@@ -204,19 +205,27 @@ class NextGenBannerAdView(
                     wireCallbacks(preloaded)
                     return
                 } catch (error: Exception) {
-                    Log.w(TAG, "registerBannerAd failed; falling back to loadAd", error)
+                    Log.w(TAG, "registerBannerAd failed", error)
                     try {
                         preloaded.destroy()
                     } catch (_: Exception) {
                     }
                 }
             } else if (preloaded != null) {
-                // No Activity to register — destroy the polled ad and fall through.
                 try {
                     preloaded.destroy()
                 } catch (_: Exception) {
                 }
             }
+            Log.w(TAG, "Preloaded banner unavailable for $adUnitId")
+            invokeSafe(
+                "onAdFailedToLoad",
+                mapOf(
+                    "code" to 3,
+                    "message" to "Preloaded banner unavailable",
+                ),
+            )
+            return
         }
 
         val requestBuilder = BannerAdRequest.Builder(adUnitId, adSize)

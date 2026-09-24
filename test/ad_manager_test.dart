@@ -110,6 +110,55 @@ void main() {
     });
   });
 
+  group('AdManager preload load guard', () {
+    test('empty poll does not load when the preloader owns the unit', () {
+      expect(
+        AdManager.debugPreloaderOwnsUnit(
+          adUnitId: 'ca-app-pub/i',
+          preloadUnitId: 'ca-app-pub/i',
+          preloadEnabled: true,
+        ),
+        isTrue,
+      );
+    });
+
+    test('one load is allowed when preload is off or the unit differs', () {
+      expect(
+        AdManager.debugPreloaderOwnsUnit(
+          adUnitId: 'ca-app-pub/other',
+          preloadUnitId: 'ca-app-pub/i',
+          preloadEnabled: true,
+        ),
+        isFalse,
+      );
+      expect(
+        AdManager.debugPreloaderOwnsUnit(
+          adUnitId: 'ca-app-pub/i',
+          preloadUnitId: 'ca-app-pub/i',
+          preloadEnabled: false,
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('AdManager consent gate', () {
+    test('preloaders start only when ads are allowed and enabled', () {
+      expect(
+        AdManager.debugMayStartPreloads(canRequestAds: true, adsEnabled: true),
+        isTrue,
+      );
+      expect(
+        AdManager.debugMayStartPreloads(canRequestAds: false, adsEnabled: true),
+        isFalse,
+      );
+      expect(
+        AdManager.debugMayStartPreloads(canRequestAds: true, adsEnabled: false),
+        isFalse,
+      );
+    });
+  });
+
   group('AdSize.toMap for preload payload', () {
     test('anchored serializes type and width', () {
       const size = AdSize.anchored();

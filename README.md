@@ -1,6 +1,6 @@
 # admob_flutter_plus
 
-[![pub version](https://img.shields.io/badge/pub-0.2.0-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
+[![pub version](https://img.shields.io/badge/pub-0.2.1-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![New](https://img.shields.io/badge/NEW-AdManager%20helper-brightgreen)](#quick-start-with-admanager)
 
@@ -12,9 +12,8 @@ or custom XML from Flutter assets), preloaders, UMP consent, and app open ads,
 wrapped in an idiomatic, Future-first Dart API. Includes an optional
 [AdManager](#quick-start-with-admanager) helper for one-call setup.
 
-> **New in 0.2.0:** [AdManager](#quick-start-with-admanager) — initialize,
-> preload, banners, rewarded, app open on resume, and PiP from a single helper.
-> The low-level SDK API is unchanged.
+> **New in 0.2.1:** [AdManager](#quick-start-with-admanager) waits for consent
+> before any preload, and an empty preloaded ad is not requested again.
 
 > **Unofficial package.** `admob_flutter_plus` is **not** published, endorsed,
 > or maintained by Google. It wraps the official
@@ -42,7 +41,7 @@ no-ops where sensible.
 
 ```yaml
 dependencies:
-  admob_flutter_plus: ^0.2.0
+  admob_flutter_plus: ^0.2.1
 ```
 
 ### AndroidManifest setup
@@ -89,6 +88,10 @@ Future<void> main() async {
       appOpen: 'ca-app-pub-xxx/app-open',
       banner: 'ca-app-pub-xxx/banner',
     ),
+    onConsentDismissed: (canRequestAds) {
+      // true: enabled preloaders load on their own
+      // false: no ad request was sent
+    },
   );
   runApp(const MyApp());
 }
@@ -112,12 +115,12 @@ AdManager.native(
   template: NativeTemplate.asset('assets/native/my_template.xml'),
 );
 
-// Load-and-show (poll preloader for that id if ready, else load then show)
+// Load-and-show. If this unit's preloader is on, an empty buffer does not load again.
 AdManager.interstitial(adUnitId: interstitialId, onClosed: () {});
 AdManager.reward(adUnitId: rewardedId, onReward: (r) {}, onUnavailable: () {});
 AdManager.rewardInterstitial(adUnitId: riId, onReward: (r) {});
 
-// Prefer preloaded buffer; if empty, one load-then-show (no retry loop)
+// Preloaded buffer only. Empty means onUnavailable, no second load.
 AdManager.showPreLoadedInterstitial(onClosed: () {}, onUnavailable: () {});
 AdManager.showPreLoadedReward(onReward: (r) {}, onUnavailable: () {});
 

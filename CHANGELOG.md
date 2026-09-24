@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.1
+
+### Added
+
+- `AdManager.initialize` `onConsentDismissed`. It runs when the consent form
+  closes, or when no form was required. `true` means enabled preloaders and
+  resume app-open load on their own. `false` means no ad request was sent.
+
+### Changed
+
+- Preloaded interstitial, rewarded, and rewarded interstitial shows use the
+  buffer only. An empty buffer calls `onUnavailable` and does not load again.
+- `interstitial` / `reward` / `rewardInterstitial` load once only when that
+  unit's preloader is off or the caller uses a different ad unit.
+- Resume app-open shows a cached ad only while it is still filled. An expired
+  ad is loaded again for the next resume and is not shown on that return. A
+  failed load is not retried.
+- A preloaded banner no longer falls back to `loadAd` when the buffer is empty
+  or register fails. It reports `onAdFailedToLoad` instead.
+- Preloaders and resume app-open start only when `canRequestAds` is true,
+  including after `setAdsEnabled(true)`. A consent error no longer counts as
+  permission to request ads.
+
 ## 0.2.0
 
 ### Added

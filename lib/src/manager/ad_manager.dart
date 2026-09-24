@@ -80,6 +80,7 @@ class AdManager {
   static bool _preloadBanner = false;
   static AdSize _preloadBannerSize = const AdSize.anchored();
   static bool _showAppOpenOnResume = false;
+  static bool _canRequestAds = false;
   static int _bufferSize = 2;
 
   static bool _fullscreenBusy = false;
@@ -103,6 +104,10 @@ class AdManager {
   /// Initializes consent, the Mobile Ads SDK, optional preloaders, and optional
   /// resume app-open listening.
   ///
+  /// Preloaders and resume app-open start only when `canRequestAds` is true.
+  /// [onConsentDismissed] runs when the consent form closes, or when no form
+  /// was required, before those loads. `true` means ads load on their own.
+  ///
   /// **Never throws.** Failures are reported in debug only so `runApp()` is
   /// always reachable.
   static Future<InitializationStatus?> initialize({
@@ -116,6 +121,7 @@ class AdManager {
     bool showAppOpenOnResume = false,
     PreAdUnitIds preAdUnitIds = const PreAdUnitIds(),
     int bufferSize = 2,
+    void Function(bool canRequestAds)? onConsentDismissed,
   }) async {
     if (_initialized) {
       return MobileAds.instance.lastInitializationStatus;
@@ -136,6 +142,7 @@ class AdManager {
     try {
       _debugCheckPreloadUnits();
 
+      var canRequest = false;
       try {
         await ConsentInformation.instance.requestConsentInfoUpdate(
           ConsentRequestParameters(
@@ -143,26 +150,18 @@ class AdManager {
           ),
         );
         await ConsentForm.loadAndShowConsentFormIfRequired();
-      } catch (error, stack) {
-        _reportDebug('Consent failed (continuing): $error', stack);
-      }
-
-      var canRequest = true;
-      try {
         canRequest = await ConsentInformation.instance.canRequestAds();
-      } catch (_) {
-        canRequest = true;
+      } catch (error, stack) {
+        _reportDebug('Consent failed (ads will not load): $error', stack);
+        canRequest = false;
       }
+      _canRequestAds = canRequest;
+      onConsentDismissed?.call(canRequest);
 
-      if (canRequest) {
+      try {
         status = await MobileAds.instance.initialize();
-      } else {
-        // Still initialize so ads can load where the SDK allows.
-        try {
-          status = await MobileAds.instance.initialize();
-        } catch (error, stack) {
-          _reportDebug('MobileAds.initialize failed: $error', stack);
-        }
+      } catch (error, stack) {
+        _reportDebug('MobileAds.initialize failed: $error', stack);
       }
 
       if (testDeviceIds != null && testDeviceIds.isNotEmpty) {
@@ -171,7 +170,7 @@ class AdManager {
         );
       }
 
-      if (_adsEnabled.value) {
+      if (_mayStartPreloads(canRequestAds: canRequest, adsEnabled: _adsEnabled.value)) {
         await _startPreloaders();
         if (_showAppOpenOnResume) {
           await _startResumeAppOpen();
@@ -200,6 +199,9 @@ class AdManager {
       return;
     }
     if (!_initialized) return;
+    if (!_mayStartPreloads(canRequestAds: _canRequestAds, adsEnabled: true)) {
+      return;
+    }
     await _startPreloaders();
     if (_showAppOpenOnResume) {
       await _startResumeAppOpen();
@@ -297,7 +299,9 @@ class AdManager {
   // Load-and-show (no `show` prefix)
   // ---------------------------------------------------------------------------
 
-  /// Load-and-show interstitial. Polls the preloader for [adUnitId] first.
+  /// Load-and-show interstitial. Uses a preloaded ad for [adUnitId] when one
+  /// is ready. Loads once only when that unit's preloader is not already
+  /// requesting.
   static Future<void> interstitial({
     required String adUnitId,
     void Function()? onClosed,
@@ -311,7 +315,14 @@ class AdManager {
     try {
       InterstitialAd? ad =
           await InterstitialAdPreloader.poll(adUnitId: adUnitId);
-      ad ??= await _loadInterstitial(adUnitId);
+      if (ad == null &&
+          !_preloaderOwns(
+            adUnitId,
+            _preAdUnitIds.interstitial,
+            _preloadInterstitial,
+          )) {
+        ad = await _loadInterstitial(adUnitId);
+      }
       if (ad == null) {
         onUnavailable?.call();
         return;
@@ -328,7 +339,9 @@ class AdManager {
     }
   }
 
-  /// Load-and-show rewarded. Polls the preloader for [adUnitId] first.
+  /// Load-and-show rewarded. Uses a preloaded ad for [adUnitId] when one is
+  /// ready. Loads once only when that unit's preloader is not already
+  /// requesting.
   static Future<void> reward({
     required String adUnitId,
     required void Function(RewardItem reward) onReward,
@@ -342,7 +355,10 @@ class AdManager {
     _fullscreenBusy = true;
     try {
       RewardedAd? ad = await RewardedAdPreloader.poll(adUnitId: adUnitId);
-      ad ??= await _loadRewarded(adUnitId);
+      if (ad == null &&
+          !_preloaderOwns(adUnitId, _preAdUnitIds.rewarded, _preloadRewarded)) {
+        ad = await _loadRewarded(adUnitId);
+      }
       if (ad == null) {
         onUnavailable?.call();
         return;
@@ -360,7 +376,9 @@ class AdManager {
     }
   }
 
-  /// Load-and-show rewarded interstitial. Polls preloader for [adUnitId] first.
+  /// Load-and-show rewarded interstitial. Uses a preloaded ad for [adUnitId]
+  /// when one is ready. Loads once only when that unit's preloader is not
+  /// already requesting.
   static Future<void> rewardInterstitial({
     required String adUnitId,
     required void Function(RewardItem reward) onReward,
@@ -375,7 +393,14 @@ class AdManager {
     try {
       RewardedInterstitialAd? ad =
           await RewardedInterstitialAdPreloader.poll(adUnitId: adUnitId);
-      ad ??= await _loadRewardedInterstitial(adUnitId);
+      if (ad == null &&
+          !_preloaderOwns(
+            adUnitId,
+            _preAdUnitIds.rewardedInterstitial,
+            _preloadRewardedInterstitial,
+          )) {
+        ad = await _loadRewardedInterstitial(adUnitId);
+      }
       if (ad == null) {
         onUnavailable?.call();
         return;
@@ -394,13 +419,12 @@ class AdManager {
   }
 
   // ---------------------------------------------------------------------------
-  // Preloaded show* (prefer buffer; one load-and-show if not ready)
+  // Preloaded show* (buffer only — no second load)
   // ---------------------------------------------------------------------------
 
   /// Shows a preloaded interstitial from [PreAdUnitIds.interstitial].
   ///
-  /// Prefers the SDK buffer. If empty (not ready / still loading / no fill),
-  /// performs **one** load-then-show — never loops.
+  /// If the buffer is empty, calls [onUnavailable] and does not load.
   static Future<void> showPreLoadedInterstitial({
     void Function()? onClosed,
     void Function()? onImpression,
@@ -417,9 +441,8 @@ class AdManager {
 
     _fullscreenBusy = true;
     try {
-      InterstitialAd? ad =
+      final InterstitialAd? ad =
           await InterstitialAdPreloader.poll(adUnitId: id);
-      ad ??= await _loadInterstitial(id);
       if (ad == null) {
         onUnavailable?.call();
         return;
@@ -438,7 +461,7 @@ class AdManager {
 
   /// Shows a preloaded rewarded ad from [PreAdUnitIds.rewarded].
   ///
-  /// Prefers the SDK buffer. If empty, performs **one** load-then-show.
+  /// If the buffer is empty, calls [onUnavailable] and does not load.
   static Future<void> showPreLoadedReward({
     required void Function(RewardItem reward) onReward,
     void Function()? onClosed,
@@ -456,8 +479,7 @@ class AdManager {
 
     _fullscreenBusy = true;
     try {
-      RewardedAd? ad = await RewardedAdPreloader.poll(adUnitId: id);
-      ad ??= await _loadRewarded(id);
+      final RewardedAd? ad = await RewardedAdPreloader.poll(adUnitId: id);
       if (ad == null) {
         onUnavailable?.call();
         return;
@@ -478,7 +500,7 @@ class AdManager {
   /// Shows a preloaded rewarded interstitial from
   /// [PreAdUnitIds.rewardedInterstitial].
   ///
-  /// Prefers the SDK buffer. If empty, performs **one** load-then-show.
+  /// If the buffer is empty, calls [onUnavailable] and does not load.
   static Future<void> showPreLoadedRewardInterstitial({
     required void Function(RewardItem reward) onReward,
     void Function()? onClosed,
@@ -499,9 +521,8 @@ class AdManager {
 
     _fullscreenBusy = true;
     try {
-      RewardedInterstitialAd? ad =
+      final RewardedInterstitialAd? ad =
           await RewardedInterstitialAdPreloader.poll(adUnitId: id);
-      ad ??= await _loadRewardedInterstitial(id);
       if (ad == null) {
         onUnavailable?.call();
         return;
@@ -760,13 +781,13 @@ class AdManager {
 
       _fullscreenBusy = true;
       try {
-        var ad = _resumeAppOpen;
-        if (ad == null || !await ad.isAvailable()) {
+        final ad = _resumeAppOpen;
+        if (ad == null) return;
+        if (!await ad.isAvailable()) {
           await _disposeResumeAppOpen();
           await _loadResumeAppOpen();
-          ad = _resumeAppOpen;
+          return;
         }
-        if (ad == null || !await ad.isAvailable()) return;
 
         final completer = Completer<void>();
         ad.listener = FullScreenAdListener(
@@ -822,6 +843,24 @@ class AdManager {
   // ---------------------------------------------------------------------------
   // Internals — show helpers
   // ---------------------------------------------------------------------------
+
+  static bool _mayStartPreloads({
+    required bool canRequestAds,
+    required bool adsEnabled,
+  }) =>
+      canRequestAds && adsEnabled;
+
+  /// True when this unit's preloader is already asking Google, so an empty
+  /// poll must not trigger another load.
+  static bool _preloaderOwns(
+    String adUnitId,
+    String? preloadUnitId,
+    bool preloadEnabled,
+  ) =>
+      preloadEnabled &&
+      preloadUnitId != null &&
+      preloadUnitId.isNotEmpty &&
+      preloadUnitId == adUnitId;
 
   static bool _canShowFullscreen(void Function()? onUnavailable) {
     if (!_adsEnabled.value || _fullscreenBusy) {
@@ -977,6 +1016,7 @@ class AdManager {
     _preloadBanner = false;
     _preloadBannerSize = const AdSize.anchored();
     _showAppOpenOnResume = false;
+    _canRequestAds = false;
     _bufferSize = 2;
     _fullscreenBusy = false;
     _sawBackground = false;
@@ -984,6 +1024,23 @@ class AdManager {
     _resumeAppOpen = null;
     _popAd = null;
   }
+
+  /// Test-only: whether an empty preload poll may issue one load.
+  @visibleForTesting
+  static bool debugPreloaderOwnsUnit({
+    required String adUnitId,
+    required String? preloadUnitId,
+    required bool preloadEnabled,
+  }) =>
+      _preloaderOwns(adUnitId, preloadUnitId, preloadEnabled);
+
+  /// Test-only: whether preloaders may start for this consent and ads flag.
+  @visibleForTesting
+  static bool debugMayStartPreloads({
+    required bool canRequestAds,
+    required bool adsEnabled,
+  }) =>
+      _mayStartPreloads(canRequestAds: canRequestAds, adsEnabled: adsEnabled);
 
   /// Test-only: seed [preAdUnitIds] without calling [initialize].
   @visibleForTesting
