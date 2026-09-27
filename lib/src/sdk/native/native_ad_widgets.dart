@@ -33,7 +33,7 @@ class _NativeTemplateView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (defaultTargetPlatform != TargetPlatform.android || !ad.isLoaded) {
-      return SizedBox(height: height, child: placeholder);
+      return placeholder ?? const SizedBox.shrink();
     }
     final resolvedStyle = style.resolve(context);
     return SizedBox(
@@ -72,7 +72,9 @@ class NativeBannerAdView extends StatelessWidget {
   /// Template styling.
   final NativeAdViewStyle style;
 
-  /// Widget shown before the ad is loaded or on unsupported platforms.
+  /// Shown when the ad is not loaded or the platform is unsupported.
+  ///
+  /// When null, those states use [SizedBox.shrink].
   final Widget? placeholder;
 
   @override
@@ -105,7 +107,9 @@ class NativeSmallAdView extends StatelessWidget {
   /// Template styling.
   final NativeAdViewStyle style;
 
-  /// Widget shown before the ad is loaded or on unsupported platforms.
+  /// Shown when the ad is not loaded or the platform is unsupported.
+  ///
+  /// When null, those states use [SizedBox.shrink].
   final Widget? placeholder;
 
   @override
@@ -138,7 +142,9 @@ class NativeLargeAdView extends StatelessWidget {
   /// Template styling.
   final NativeAdViewStyle style;
 
-  /// Widget shown before the ad is loaded or on unsupported platforms.
+  /// Shown when the ad is not loaded or the platform is unsupported.
+  ///
+  /// When null, those states use [SizedBox.shrink].
   final Widget? placeholder;
 
   @override
@@ -198,8 +204,10 @@ class NativeCustomAdView extends StatefulWidget {
   /// Template styling overlays (colors, CTA radius, badge text, …).
   final NativeAdViewStyle style;
 
-  /// Widget shown before the ad is loaded, while validating the asset, or on
+  /// Shown before the ad is loaded, while validating the asset, or on
   /// unsupported platforms.
+  ///
+  /// When null, those states use [SizedBox.shrink].
   final Widget? placeholder;
 
   @override
@@ -258,7 +266,7 @@ class _NativeCustomAdViewState extends State<NativeCustomAdView> {
     }
     final xml = _templateXml;
     if (xml == null) {
-      return SizedBox(height: widget.height, child: widget.placeholder);
+      return widget.placeholder ?? const SizedBox.shrink();
     }
     return _NativeTemplateView(
       viewType: _customViewType,

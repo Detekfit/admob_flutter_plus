@@ -61,7 +61,10 @@ enum _NativeTemplateKind { banner, small, large, asset }
 /// Native ad placement used by [AdManager.native].
 ///
 /// Loads a [NativeAd] and renders the chosen [template].
-/// Renders [placeholder] (or an empty box) when ads are disabled or load fails.
+///
+/// [height] applies only while an ad is showing. Loading, no fill, a load
+/// error, and [AdManager.adsEnabled] being false render [placeholder], or
+/// [SizedBox.shrink] when none is set.
 class AdNative extends StatefulWidget {
   /// Creates an [AdNative].
   const AdNative({
@@ -82,7 +85,7 @@ class AdNative extends StatefulWidget {
   /// Built-in or custom asset template.
   final NativeTemplate template;
 
-  /// Reserved height. Defaults depend on [template].
+  /// Height while an ad is showing. Defaults depend on [template].
   final double? height;
 
   /// Per-request targeting.
@@ -97,7 +100,9 @@ class AdNative extends StatefulWidget {
   /// Lifecycle callbacks.
   final NativeAdListener? listener;
 
-  /// Shown when ads are disabled or before/after a failed load.
+  /// Shown while loading, on failure, or when ads are disabled.
+  ///
+  /// When null, those states use [SizedBox.shrink].
   final Widget? placeholder;
 
   @override
@@ -183,10 +188,7 @@ class _AdNativeState extends State<AdNative> {
   @override
   Widget build(BuildContext context) {
     if (!AdManager.adsEnabled || _failed || _ad == null || !_ad!.isLoaded) {
-      return SizedBox(
-        height: _resolvedHeight,
-        child: widget.placeholder,
-      );
+      return widget.placeholder ?? const SizedBox.shrink();
     }
 
     final ad = _ad!;

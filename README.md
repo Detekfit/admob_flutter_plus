@@ -1,6 +1,6 @@
 # admob_flutter_plus
 
-[![pub version](https://img.shields.io/badge/pub-0.2.1-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
+[![pub version](https://img.shields.io/badge/pub-0.2.2-blue.svg)](https://pub.dev/packages/admob_flutter_plus)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![New](https://img.shields.io/badge/NEW-AdManager%20helper-brightgreen)](#quick-start-with-admanager)
 
@@ -12,8 +12,8 @@ or custom XML from Flutter assets), preloaders, UMP consent, and app open ads,
 wrapped in an idiomatic, Future-first Dart API. Includes an optional
 [AdManager](#quick-start-with-admanager) helper for one-call setup.
 
-> **New in 0.2.1:** [AdManager](#quick-start-with-admanager) waits for consent
-> before any preload, and an empty preloaded ad is not requested again.
+> **New in 0.2.2:** Native and banner slots stay at the placeholder (or take no
+> height) until an ad is showing. The reserved height applies only then.
 
 > **Unofficial package.** `admob_flutter_plus` is **not** published, endorsed,
 > or maintained by Google. It wraps the official
@@ -41,7 +41,7 @@ no-ops where sensible.
 
 ```yaml
 dependencies:
-  admob_flutter_plus: ^0.2.1
+  admob_flutter_plus: ^0.2.2
 ```
 
 ### AndroidManifest setup

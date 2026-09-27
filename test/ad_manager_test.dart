@@ -1,4 +1,5 @@
 import 'package:admob_flutter_plus/admob_flutter_plus.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -59,6 +60,58 @@ void main() {
       expect(banner.adUnitId, 'ca-app-pub-test/banner');
       expect(banner.usePreload, isTrue);
       expect(banner.size, const AdSize.anchored());
+    });
+  });
+
+  group('AdNative slot', () {
+    Future<void> pumpNative(
+      WidgetTester tester,
+      NativeTemplate template,
+    ) {
+      return tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: AdManager.native(
+              adUnitId: 'ca-app-pub-test/native',
+              template: template,
+              height: 300,
+              placeholder: const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('stays at zero height while ads are disabled', (tester) async {
+      await AdManager.setAdsEnabled(false);
+      for (final template in [NativeTemplate.small, NativeTemplate.banner]) {
+        await pumpNative(tester, template);
+        expect(tester.getSize(find.byType(AdNative)).height, 0);
+      }
+    });
+
+    testWidgets('stays at zero height when the load fails', (tester) async {
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      const channel = MethodChannel('admob_flutter_plus');
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'loadNative') {
+          return <String, dynamic>{
+            'loaded': false,
+            'error': <String, dynamic>{'code': 3, 'message': 'No fill'},
+          };
+        }
+        return null;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+      for (final template in [NativeTemplate.small, NativeTemplate.banner]) {
+        await pumpNative(tester, template);
+        await tester.pump();
+        expect(tester.getSize(find.byType(AdNative)).height, 0);
+      }
     });
   });
 

@@ -15,15 +15,15 @@ const String _bannerViewType = 'admob_flutter_plus/banner_ad';
 
 /// A widget that displays a banner ad using an Android `AdView` PlatformView.
 ///
-/// The widget requires a bounded height. Provide an explicit [height], or wrap
-/// it in a `SizedBox`/`AspectRatio`. Adaptive banners resolve their own height
-/// natively; the [height] you provide is the reserved slot in the Flutter
-/// layout (collapsed size for collapsible banners).
+/// [height] applies only after the ad has loaded. While loading, on failure,
+/// or on a non-Android host, the widget is [placeholder] (or an empty box).
+/// Adaptive banners resolve their own height natively; [height] is the Flutter
+/// slot once the ad is showing (collapsed size for collapsible banners).
 ///
 /// On Android this uses Hybrid Composition (`initSurfaceAndroidView`) so
 /// collapsible expand overlays are not trapped inside a Virtual Display texture.
-///
-/// On non-Android platforms this widget renders [placeholder] (or an empty box).
+/// The platform view stays offstage at [height] until `onAdLoaded`, so the
+/// request can finish without reserving that height in the layout.
 class BannerAdView extends StatefulWidget {
   /// Creates a [BannerAdView].
   const BannerAdView({
@@ -44,8 +44,8 @@ class BannerAdView extends StatefulWidget {
   /// The requested [AdSize].
   final AdSize size;
 
-  /// Reserved height in dp. Required for adaptive sizes; for fixed sizes it
-  /// defaults to the size's own height.
+  /// Height in dp once the ad has loaded. Required for adaptive sizes; for
+  /// fixed sizes it defaults to the size's own height.
   final double? height;
 
   /// Per-request targeting and extras (for example collapsible configuration).
@@ -57,7 +57,9 @@ class BannerAdView extends StatefulWidget {
   /// Optional controller for manual [BannerAdController.refresh].
   final BannerAdController? controller;
 
-  /// Widget shown when the ad fails to load, or on unsupported platforms.
+  /// Shown while loading, when the ad fails to load, or on unsupported platforms.
+  ///
+  /// When null, those states use [SizedBox.shrink].
   final Widget? placeholder;
 
   /// When `true`, the PlatformView polls `BannerAdPreloader` for [adUnitId]
@@ -72,6 +74,7 @@ class BannerAdView extends StatefulWidget {
 class _BannerAdViewState extends State<BannerAdView> {
   MethodChannel? _channel;
   bool _failed = false;
+  bool _loaded = false;
 
   double get _resolvedHeight {
     if (widget.height != null) return widget.height!;
@@ -110,7 +113,8 @@ class _BannerAdViewState extends State<BannerAdView> {
       await _channel?.invokeMethod<void>('refresh', _creationParams);
     } on PlatformException catch (e) {
       debugPrint('admob_flutter_plus: banner refresh failed: ${e.message}');
-      if (mounted) setState(() => _failed = true);
+      // A failed refresh keeps an ad that is already on screen.
+      if (mounted && !_loaded) setState(() => _failed = true);
     }
   }
 
@@ -120,7 +124,12 @@ class _BannerAdViewState extends State<BannerAdView> {
     final args = call.arguments;
     switch (call.method) {
       case 'onAdLoaded':
-        if (_failed) setState(() => _failed = false);
+        if (!_loaded || _failed) {
+          setState(() {
+            _loaded = true;
+            _failed = false;
+          });
+        }
         final map = _asMap(args);
         final resolved = map['adUnitId'] as String?;
         if (resolved != null && resolved.isNotEmpty) {
@@ -130,7 +139,7 @@ class _BannerAdViewState extends State<BannerAdView> {
         break;
       case 'onAdFailedToLoad':
         final error = AdError.fromMap(_asMap(args));
-        setState(() => _failed = true);
+        if (!_loaded) setState(() => _failed = true);
         listener?.onAdFailedToLoad?.call(error);
         break;
       case 'onAdRefreshed':
@@ -196,18 +205,25 @@ class _BannerAdViewState extends State<BannerAdView> {
 
   @override
   Widget build(BuildContext context) {
-    if (defaultTargetPlatform != TargetPlatform.android) {
+    if (defaultTargetPlatform != TargetPlatform.android || _failed) {
       return widget.placeholder ?? const SizedBox.shrink();
     }
 
-    if (_failed && widget.placeholder != null) {
-      return SizedBox(height: _resolvedHeight, child: widget.placeholder);
-    }
-
-    return SizedBox(
-      height: _resolvedHeight,
-      width: double.infinity,
-      child: _buildAndroidPlatformView(),
+    // The platform view stays mounted so the load is not restarted when the
+    // slot grows. Offstage reports zero height until the ad is showing.
+    return Stack(
+      children: [
+        if (!_loaded) widget.placeholder ?? const SizedBox.shrink(),
+        Offstage(
+          key: const ValueKey<String>('banner-view'),
+          offstage: !_loaded,
+          child: SizedBox(
+            height: _resolvedHeight,
+            width: double.infinity,
+            child: _buildAndroidPlatformView(),
+          ),
+        ),
+      ],
     );
   }
 }
