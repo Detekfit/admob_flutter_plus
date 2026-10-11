@@ -14,6 +14,7 @@ import '../sdk/core/full_screen_ad.dart';
 import '../sdk/core/initialization_status.dart';
 import '../sdk/core/mobile_ads.dart';
 import '../sdk/core/request_configuration.dart';
+import '../sdk/core/rewarded_full_screen_ad.dart';
 import '../sdk/interstitial/interstitial_ad.dart';
 import '../sdk/native/native_ad_listener.dart';
 import '../sdk/native/native_ad_options.dart';
@@ -342,9 +343,14 @@ class AdManager {
   /// Load-and-show rewarded. Uses a preloaded ad for [adUnitId] when one is
   /// ready. Loads once only when that unit's preloader is not already
   /// requesting.
+  ///
+  /// On dismiss, [onReward] runs first with `isReward == true` and the AdMob
+  /// [RewardItem] when the user earned the reward, or `isReward == false` and
+  /// `reward == null` when the ad was closed early. [onClosed] runs after that
+  /// and is not a reward result.
   static Future<void> reward({
     required String adUnitId,
-    required void Function(RewardItem reward) onReward,
+    required void Function(bool isReward, RewardItem? reward) onReward,
     void Function()? onClosed,
     void Function()? onImpression,
     void Function()? onClicked,
@@ -363,7 +369,7 @@ class AdManager {
         onUnavailable?.call();
         return;
       }
-      await _showRewarded(
+      await _showRewardedFullScreen(
         ad,
         onReward: onReward,
         onClosed: onClosed,
@@ -379,9 +385,14 @@ class AdManager {
   /// Load-and-show rewarded interstitial. Uses a preloaded ad for [adUnitId]
   /// when one is ready. Loads once only when that unit's preloader is not
   /// already requesting.
+  ///
+  /// On dismiss, [onReward] runs first with `isReward == true` and the AdMob
+  /// [RewardItem] when the user earned the reward, or `isReward == false` and
+  /// `reward == null` when the ad was closed early. [onClosed] runs after that
+  /// and is not a reward result.
   static Future<void> rewardInterstitial({
     required String adUnitId,
-    required void Function(RewardItem reward) onReward,
+    required void Function(bool isReward, RewardItem? reward) onReward,
     void Function()? onClosed,
     void Function()? onImpression,
     void Function()? onClicked,
@@ -405,7 +416,7 @@ class AdManager {
         onUnavailable?.call();
         return;
       }
-      await _showRewardedInterstitial(
+      await _showRewardedFullScreen(
         ad,
         onReward: onReward,
         onClosed: onClosed,
@@ -462,8 +473,13 @@ class AdManager {
   /// Shows a preloaded rewarded ad from [PreAdUnitIds.rewarded].
   ///
   /// If the buffer is empty, calls [onUnavailable] and does not load.
+  ///
+  /// On dismiss, [onReward] runs first with `isReward == true` and the AdMob
+  /// [RewardItem] when the user earned the reward, or `isReward == false` and
+  /// `reward == null` when the ad was closed early. [onClosed] runs after that
+  /// and is not a reward result.
   static Future<void> showPreLoadedReward({
-    required void Function(RewardItem reward) onReward,
+    required void Function(bool isReward, RewardItem? reward) onReward,
     void Function()? onClosed,
     void Function()? onImpression,
     void Function()? onClicked,
@@ -484,7 +500,7 @@ class AdManager {
         onUnavailable?.call();
         return;
       }
-      await _showRewarded(
+      await _showRewardedFullScreen(
         ad,
         onReward: onReward,
         onClosed: onClosed,
@@ -501,8 +517,13 @@ class AdManager {
   /// [PreAdUnitIds.rewardedInterstitial].
   ///
   /// If the buffer is empty, calls [onUnavailable] and does not load.
+  ///
+  /// On dismiss, [onReward] runs first with `isReward == true` and the AdMob
+  /// [RewardItem] when the user earned the reward, or `isReward == false` and
+  /// `reward == null` when the ad was closed early. [onClosed] runs after that
+  /// and is not a reward result.
   static Future<void> showPreLoadedRewardInterstitial({
-    required void Function(RewardItem reward) onReward,
+    required void Function(bool isReward, RewardItem? reward) onReward,
     void Function()? onClosed,
     void Function()? onImpression,
     void Function()? onClicked,
@@ -527,7 +548,7 @@ class AdManager {
         onUnavailable?.call();
         return;
       }
-      await _showRewardedInterstitial(
+      await _showRewardedFullScreen(
         ad,
         onReward: onReward,
         onClosed: onClosed,
@@ -926,9 +947,12 @@ class AdManager {
     }
   }
 
-  static Future<void> _showRewarded(
-    RewardedAd ad, {
-    required void Function(RewardItem reward) onReward,
+  /// Settles [onReward] at dismiss: store the AdMob item on earn, then on
+  /// dismiss call [onReward] once (`true` + item, or `false` + null) and
+  /// [onClosed] after that.
+  static Future<void> _showRewardedFullScreen(
+    RewardedFullScreenAd ad, {
+    required void Function(bool isReward, RewardItem? reward) onReward,
     void Function()? onClosed,
     void Function()? onImpression,
     void Function()? onClicked,
@@ -936,41 +960,19 @@ class AdManager {
   }) async {
     final completer = Completer<void>();
     var failed = false;
-    ad.listener = FullScreenAdListener(
-      onAdImpression: onImpression,
-      onAdClicked: onClicked,
-      onAdDismissedFullScreenContent: () {
-        onClosed?.call();
-        if (!completer.isCompleted) completer.complete();
-      },
-      onAdFailedToShowFullScreenContent: (_) {
-        failed = true;
-        if (!completer.isCompleted) completer.complete();
-      },
-    );
-    try {
-      await ad.show(onUserEarnedReward: onReward);
-      await completer.future;
-      if (failed) onUnavailable?.call();
-    } catch (_) {
-      onUnavailable?.call();
-    }
-  }
+    var dismissed = false;
+    var rewardReported = false;
+    RewardItem? earned;
 
-  static Future<void> _showRewardedInterstitial(
-    RewardedInterstitialAd ad, {
-    required void Function(RewardItem reward) onReward,
-    void Function()? onClosed,
-    void Function()? onImpression,
-    void Function()? onClicked,
-    void Function()? onUnavailable,
-  }) async {
-    final completer = Completer<void>();
-    var failed = false;
     ad.listener = FullScreenAdListener(
       onAdImpression: onImpression,
       onAdClicked: onClicked,
       onAdDismissedFullScreenContent: () {
+        dismissed = true;
+        if (!rewardReported) {
+          rewardReported = true;
+          onReward(earned != null, earned);
+        }
         onClosed?.call();
         if (!completer.isCompleted) completer.complete();
       },
@@ -980,7 +982,12 @@ class AdManager {
       },
     );
     try {
-      await ad.show(onUserEarnedReward: onReward);
+      await ad.showRewarded(
+        onUserEarnedReward: (reward) {
+          if (dismissed || rewardReported) return;
+          earned = reward;
+        },
+      );
       await completer.future;
       if (failed) onUnavailable?.call();
     } catch (_) {

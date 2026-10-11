@@ -117,12 +117,27 @@ AdManager.native(
 
 // Load-and-show. If this unit's preloader is on, an empty buffer does not load again.
 AdManager.interstitial(adUnitId: interstitialId, onClosed: () {});
-AdManager.reward(adUnitId: rewardedId, onReward: (r) {}, onUnavailable: () {});
-AdManager.rewardInterstitial(adUnitId: riId, onReward: (r) {});
+AdManager.reward(
+  adUnitId: rewardedId,
+  onReward: (isReward, reward) {
+    // true + RewardItem: grant. false + null: closed before reward.
+  },
+  onClosed: () {
+    // Optional follow-up after onReward. Not a reward result.
+  },
+  onUnavailable: () {},
+);
+AdManager.rewardInterstitial(
+  adUnitId: riId,
+  onReward: (isReward, reward) {},
+);
 
 // Preloaded buffer only. Empty means onUnavailable, no second load.
 AdManager.showPreLoadedInterstitial(onClosed: () {}, onUnavailable: () {});
-AdManager.showPreLoadedReward(onReward: (r) {}, onUnavailable: () {});
+AdManager.showPreLoadedReward(
+  onReward: (isReward, reward) {},
+  onUnavailable: () {},
+);
 
 // First-open / custom app-open: always load-then-show (independent of resume)
 AdManager.showAppOpen(adUnitId: appOpenId);

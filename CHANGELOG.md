@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is showing. With no placeholder, the slot is `SizedBox.shrink()`. Custom or
   template height applies only while an ad is on screen. Loading, no fill, and
   load errors do not keep that height.
+- **Breaking:** `AdManager.reward`, `rewardInterstitial`, `showPreLoadedReward`,
+  and `showPreLoadedRewardInterstitial` now call
+  `onReward(bool isReward, RewardItem? reward)` at dismiss. `isReward` is
+  `true` with the AdMob item when the user earned the reward, or `false` with
+  `null` when the ad was closed early. `onClosed` runs after `onReward` and
+  is not a reward result.
 
 ## 0.2.1
 
