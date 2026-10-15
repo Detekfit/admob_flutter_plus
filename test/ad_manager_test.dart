@@ -7,20 +7,27 @@ void main() {
   setUp(AdManager.debugReset);
   tearDown(AdManager.debugReset);
 
-  group('PreAdUnitIds', () {
-    test('stores optional unit ids', () {
-      const units = PreAdUnitIds(
-        interstitial: 'i',
-        rewarded: 'r',
-        rewardedInterstitial: 'ri',
-        banner: 'b',
-        appOpen: 'a',
+  group('Preload', () {
+    test('keeps one id per format and drops an empty id', () {
+      AdManager.debugSetPreloads(const [
+        Preload.interstitial(''),
+        Preload.interstitial('first'),
+        Preload.interstitial('second'),
+        Preload.rewarded('r'),
+        Preload.rewardedInterstitial('ri'),
+        Preload.banner('b'),
+        Preload.appOpenOnResume('a'),
+      ]);
+      expect(AdManager.debugPreloadAdUnitId<InterstitialPreload>(), 'second');
+      expect(AdManager.debugPreloadAdUnitId<RewardedPreload>(), 'r');
+      expect(
+        AdManager.debugPreloadAdUnitId<RewardedInterstitialPreload>(),
+        'ri',
       );
-      expect(units.interstitial, 'i');
-      expect(units.rewarded, 'r');
-      expect(units.rewardedInterstitial, 'ri');
-      expect(units.banner, 'b');
-      expect(units.appOpen, 'a');
+      expect(AdManager.debugPreloadAdUnitId<BannerPreload>(), 'b');
+      expect(AdManager.debugPreloadBannerSize(), const AdSize.anchored());
+      expect(AdManager.debugPreloadAdUnitId<AppOpenResumePreload>(), 'a');
+      expect(AdManager.preloads, hasLength(5));
     });
   });
 
@@ -40,7 +47,7 @@ void main() {
   });
 
   group('AdManager.showPreLoadedBanner', () {
-    test('returns placeholder when preAdUnitIds.banner is missing', () {
+    test('returns placeholder when Preload.banner is missing', () {
       final widget = AdManager.showPreLoadedBanner(
         size: const AdSize.banner(),
         placeholder: const SizedBox(key: Key('empty')),
@@ -50,10 +57,9 @@ void main() {
     });
 
     test('returns AdBanner with usePreload when banner id is configured', () {
-      AdManager.debugSetPreAdUnitIds(
-        const PreAdUnitIds(banner: 'ca-app-pub-test/banner'),
-      );
-      AdManager.debugSetPreloadBannerSize(const AdSize.anchored());
+      AdManager.debugSetPreloads(const [
+        Preload.banner('ca-app-pub-test/banner'),
+      ]);
       final widget = AdManager.showPreLoadedBanner(height: 100);
       expect(widget, isA<AdBanner>());
       final banner = widget as AdBanner;
@@ -64,10 +70,7 @@ void main() {
   });
 
   group('AdNative slot', () {
-    Future<void> pumpNative(
-      WidgetTester tester,
-      NativeTemplate template,
-    ) {
+    Future<void> pumpNative(WidgetTester tester, NativeTemplate template) {
       return tester.pumpWidget(
         Directionality(
           textDirection: TextDirection.ltr,
@@ -169,30 +172,30 @@ void main() {
         AdManager.debugPreloaderOwnsUnit(
           adUnitId: 'ca-app-pub/i',
           preloadUnitId: 'ca-app-pub/i',
-          preloadEnabled: true,
         ),
         isTrue,
       );
     });
 
-    test('one load is allowed when preload is off or the unit differs', () {
-      expect(
-        AdManager.debugPreloaderOwnsUnit(
-          adUnitId: 'ca-app-pub/other',
-          preloadUnitId: 'ca-app-pub/i',
-          preloadEnabled: true,
-        ),
-        isFalse,
-      );
-      expect(
-        AdManager.debugPreloaderOwnsUnit(
-          adUnitId: 'ca-app-pub/i',
-          preloadUnitId: 'ca-app-pub/i',
-          preloadEnabled: false,
-        ),
-        isFalse,
-      );
-    });
+    test(
+      'one load is allowed when the unit differs or no preload id is stored',
+      () {
+        expect(
+          AdManager.debugPreloaderOwnsUnit(
+            adUnitId: 'ca-app-pub/other',
+            preloadUnitId: 'ca-app-pub/i',
+          ),
+          isFalse,
+        );
+        expect(
+          AdManager.debugPreloaderOwnsUnit(
+            adUnitId: 'ca-app-pub/i',
+            preloadUnitId: null,
+          ),
+          isFalse,
+        );
+      },
+    );
   });
 
   group('AdManager consent gate', () {
@@ -215,10 +218,7 @@ void main() {
   group('AdSize.toMap for preload payload', () {
     test('anchored serializes type and width', () {
       const size = AdSize.anchored();
-      expect(size.toMap(), <String, dynamic>{
-        'type': 'anchored',
-        'width': -1,
-      });
+      expect(size.toMap(), <String, dynamic>{'type': 'anchored', 'width': -1});
     });
 
     test('fixed banner serializes dimensions', () {

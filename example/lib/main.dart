@@ -17,13 +17,11 @@ Future<void> main() async {
   //
   //   await AdManager.initialize(
   //     adsEnabled: true,
-  //     preloadInterstitial: true,
-  //     showAppOpenOnResume: true,
-  //     preAdUnitIds: PreAdUnitIds(
-  //       interstitial: AdDemoIds.interstitial,
-  //       appOpen: AdDemoIds.appOpen,
-  //       banner: AdDemoIds.banner,
-  //     ),
+  //     preload: [
+  //       Preload.interstitial(AdDemoIds.interstitial),
+  //       Preload.banner(AdDemoIds.banner),
+  //       Preload.appOpenOnResume(AdDemoIds.appOpen),
+  //     ],
   //   );
   //
   // This demo keeps the low-level SDK path so each format can be exercised.
@@ -34,7 +32,9 @@ Future<void> main() async {
     await ConsentInformation.instance.requestConsentInfoUpdate(
       const ConsentRequestParameters(
         // Force the EEA form during debug to exercise the consent flow.
-        debugGeography: kDebugMode ? ConsentDebugGeography.eea : ConsentDebugGeography.disabled,
+        debugGeography: kDebugMode
+            ? ConsentDebugGeography.eea
+            : ConsentDebugGeography.disabled,
       ),
     );
     await ConsentForm.loadAndShowConsentFormIfRequired();
@@ -63,7 +63,11 @@ class DemoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'admob_flutter_plus demo',
-      theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true, brightness: Brightness.light),
+      theme: ThemeData(
+        colorSchemeSeed: Colors.indigo,
+        useMaterial3: true,
+        brightness: Brightness.light,
+      ),
       home: const HomePage(),
     );
   }
@@ -86,12 +90,18 @@ class HomePageState extends State<HomePage> {
   AdDemoConfig demoConfig = const AdDemoConfig();
 
   static const destinations = <NavigationDestination>[
-    NavigationDestination(icon: Icon(Icons.view_agenda_outlined), label: 'Banner'),
+    NavigationDestination(
+      icon: Icon(Icons.view_agenda_outlined),
+      label: 'Banner',
+    ),
     NavigationDestination(icon: Icon(Icons.fullscreen), label: 'Interstitial'),
     NavigationDestination(icon: Icon(Icons.card_giftcard), label: 'Rewarded'),
     NavigationDestination(icon: Icon(Icons.article_outlined), label: 'Native'),
     NavigationDestination(icon: Icon(Icons.open_in_browser), label: 'App Open'),
-    NavigationDestination(icon: Icon(Icons.picture_in_picture_alt_outlined), label: 'PiP'),
+    NavigationDestination(
+      icon: Icon(Icons.picture_in_picture_alt_outlined),
+      label: 'PiP',
+    ),
   ];
 
   Widget get section {
@@ -125,7 +135,9 @@ class HomePageState extends State<HomePage> {
       await MobileAds.instance.openAdInspector();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ad Inspector: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ad Inspector: $e')));
     }
   }
 
@@ -135,11 +147,22 @@ class HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Admob Flutter+'),
         actions: [
-          IconButton(tooltip: 'Configure ad demo', icon: const Icon(Icons.edit_outlined), onPressed: openDemoConfig),
-          TextButton.icon(onPressed: openAdInspector, icon: const Icon(Icons.bug_report_outlined), label: const Text('Ad Inspector')),
+          IconButton(
+            tooltip: 'Configure ad demo',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: openDemoConfig,
+          ),
+          TextButton.icon(
+            onPressed: openAdInspector,
+            icon: const Icon(Icons.bug_report_outlined),
+            label: const Text('Ad Inspector'),
+          ),
         ],
       ),
-      body: KeyedSubtree(key: ValueKey<Object>('$tabIndex-$demoConfig'), child: section),
+      body: KeyedSubtree(
+        key: ValueKey<Object>('$tabIndex-$demoConfig'),
+        child: section,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: tabIndex,
         onDestinationSelected: (index) {

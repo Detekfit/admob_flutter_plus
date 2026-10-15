@@ -79,18 +79,14 @@ Future<void> main() async {
   await AdManager.initialize(
     adsEnabled: true,
     testDeviceIds: ['YOUR_TEST_DEVICE_ID'],
-    preloadInterstitial: true,
-    preloadBanner: true,
-    preloadBannerSize: const AdSize.anchored(),
-    showAppOpenOnResume: true, // resume only — never on first launch
-    preAdUnitIds: const PreAdUnitIds(
-      interstitial: 'ca-app-pub-xxx/interstitial',
-      appOpen: 'ca-app-pub-xxx/app-open',
-      banner: 'ca-app-pub-xxx/banner',
-    ),
+    preload: const [
+      Preload.interstitial('ca-app-pub-xxx/interstitial'),
+      Preload.banner('ca-app-pub-xxx/banner', size: AdSize.anchored()),
+      Preload.appOpenOnResume('ca-app-pub-xxx/app-open'),
+    ],
     onConsentDismissed: (canRequestAds) {
-      // true: enabled preloaders load on their own
-      // false: no ad request was sent
+      // true: the live canRequestAds() read allowed preload
+      // false: Google returned false, or the read itself failed
     },
   );
   runApp(const MyApp());
@@ -108,7 +104,7 @@ Show ads:
 ```dart
 // Widgets
 AdManager.banner(adUnitId: bannerId, size: const AdSize.anchored(), height: 100);
-AdManager.showPreLoadedBanner(height: 100); // uses preloadBannerSize from initialize
+AdManager.showPreLoadedBanner(height: 100); // uses the Preload.banner size
 AdManager.native(adUnitId: nativeId, template: NativeTemplate.small);
 AdManager.native(
   adUnitId: nativeId,
@@ -326,7 +322,7 @@ await BannerAdPreloader.destroy(adUnitId: bannerId);
 > `BannerAdPreloader` (`start` requires `AdSize`). `bufferSize` must be 1–15
 > (SDK default 2). App open has no preloader class here — use
 > `AdManager.showAppOpen` for on-demand load-then-show, or
-> `showAppOpenOnResume` to cache one ad for resume only.
+> `AdManager` with `Preload.appOpenOnResume` to cache one ad for resume only.
 
 ## Rewarded ads
 
@@ -371,10 +367,9 @@ App open ads expire four hours after loading; `isAvailable()` enforces this.
 
 With **AdManager**:
 - `AdManager.showAppOpen(adUnitId: …)` always **loads then shows** (splash /
-  first-open). It does **not** require `showAppOpenOnResume`, and it does **not**
-  consume the resume cache.
-- `showAppOpenOnResume: true` only loads `preAdUnitIds.appOpen` ahead of time
-  and shows it after background → foreground.
+  first-open). It does **not** use the resume cache.
+- `Preload.appOpenOnResume` only loads that unit ahead of time and shows it
+  after background → foreground. It is never shown on cold start.
 
 ## Picture-in-picture ads (open beta) ![NEW](https://img.shields.io/badge/NEW-brightgreen)
 

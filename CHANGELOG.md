@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.0
+
+### Changed
+
+- **Breaking:** `AdManager.initialize` takes `preload: [Preload.interstitial(id), …]`.
+  A listed entry is the preload. `Preload.banner` carries the size (default
+  anchored). `Preload.appOpenOnResume` is the resume cache. Removed
+  `preloadInterstitial`, `preloadRewarded`, `preloadRewardedInterstitial`,
+  `preloadBanner`, `preloadBannerSize`, `showAppOpenOnResume`, and
+  `PreAdUnitIds`.
+- Preload and resume app-open start from a live `canRequestAds()` read. A
+  consent error no longer forces that read to false. `onConsentDismissed(true)`
+  means the read allowed preload. `false` means Google returned false, or the
+  read itself failed.
+
 ## 0.3.0
 
 ### Changed
